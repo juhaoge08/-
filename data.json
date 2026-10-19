@@ -147,5 +147,6 @@
   { "date": "10月14日", "revenue": 3782880, "balance": 660100 },
   { "date": "10月15日", "revenue": 4230180, "balance": 62701299 },
   { "date": "10月16日", "revenue": 5892700, "balance":68161799 },
-  { "date": "10月17日", "revenue": 13557700, "balance": 80811683 }
+  { "date": "10月17日", "revenue": 13557700, "balance": 80811683 },
+  { "date": "10月18日", "revenue": 6235540, "balance": 82146561 }
 ]
