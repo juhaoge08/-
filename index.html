@@ -5,38 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>橘耗鸽大王的数据中心</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 20px; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 20px; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        
+        /* 顶部总余额卡片 */
+        .top-balance { background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 30px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 20px; margin-bottom: 40px; box-sizing: border-box; }
+        .top-balance p { margin: 0; font-size: 16px; opacity: 0.9; }
+        .top-balance h2 { margin: 10px 0 0 0; font-size: 48px; font-weight: bold; }
+
         .menu-container { width: 100%; max-width: 600px; text-align: center; }
-        h1 { font-size: 32px; margin-bottom: 40px; color: #1d1d1f; }
-        
+        h1 { font-size: 28px; margin-bottom: 30px; color: #1d1d1f; }
         .menu-grid { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
-        
         .menu-card { background: white; width: 240px; height: 200px; border-radius: 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-decoration: none; color: #1d1d1f; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: all 0.3s ease; border: 2px solid transparent; }
         .menu-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.1); border-color: #007aff; }
-        
         .icon { font-size: 50px; margin-bottom: 15px; }
         .title { font-size: 20px; font-weight: 600; }
         .subtitle { font-size: 14px; color: #86868b; margin-top: 8px; }
-        
-        /* 未开放的按钮样式 */
         .disabled { opacity: 0.5; cursor: not-allowed; }
         .disabled:hover { transform: none; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-color: transparent; }
     </style>
 </head>
 <body>
 
+<!-- 最新余额展示区 -->
+<div class="top-balance">
+    <p>最新账户总余额</p>
+    <h2 id="home-balance">载入中...</h2>
+</div>
+
 <div class="menu-container">
     <h1>🦤 橘耗鸽大王中心</h1>
     
     <div class="menu-grid">
-        <!-- 按钮1：跳转到 data.html -->
         <a href="data.html" class="menu-card">
             <div class="icon">📈</div>
             <div class="title">当日营业额</div>
-            <div class="subtitle">看数据 & 上传表格</div>
+            <div class="subtitle">看数据 & 图表对比</div>
         </a>
-
-        <!-- 按钮2：暂时占位 -->
         <div class="menu-card disabled">
             <div class="icon">📅</div>
             <div class="title">历史汇总</div>
@@ -44,6 +48,23 @@
         </div>
     </div>
 </div>
+
+<script>
+    // 读取账本，显示最新余额
+    fetch('data.json')
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.length > 0) {
+                const latestData = data[data.length - 1]; // 拿最后一天的数据
+                document.getElementById('home-balance').innerText = '¥ ' + latestData.balance.toLocaleString();
+            } else {
+                document.getElementById('home-balance').innerText = '暂无数据';
+            }
+        })
+        .catch(err => {
+            document.getElementById('home-balance').innerText = '读取失败';
+        });
+</script>
 
 </body>
 </html>
