@@ -80,14 +80,14 @@
             datasets: [{ 
                 label: '营业额', 
                 data: [], 
-                backgroundColor: [], // 颜色会在后面动态填充
+                backgroundColor: [], 
                 borderRadius: 6 
             }] 
         },
         options: { 
             responsive: true, 
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } } // 隐藏默认图例
+            plugins: { legend: { display: false } } 
         }
     });
 
@@ -108,18 +108,58 @@
             const endSel = document.getElementById('end-date');
             startSel.innerHTML = ''; endSel.innerHTML = '';
 
-            // 按时间正序填充（最老的日期在最上面）
             globalData.forEach(item => {
                 startSel.innerHTML += `<option value="${item.date}">${item.date}</option>`;
                 endSel.innerHTML += `<option value="${item.date}">${item.date}</option>`;
             });
 
-            // 默认：开始日期是第一天，结束日期是最后一天
-            startSel.selectedIndex = 0;
-            endSel.selectedIndex = globalData.length - 1;
+            // ================= 智能默认逻辑开始 =================
+            // 1. 计算昨天和本月的字符串
+            const today = new Date();
+            let yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const yesterdayStr = (yesterday.getMonth() + 1) + '月' + yesterday.getDate() + '日';
+            const currentMonthStr = (today.getMonth() + 1) + '月';
 
-            // 第一次渲染全量数据
-            renderHistoryChart(globalData);
+            // 2. 筛选本月数据
+            let monthData = globalData.filter(item => item.date.startsWith(currentMonthStr));
+
+            let defaultStartDate, defaultEndDate;
+
+            if (monthData.length > 0) {
+                // 本月有数据，起点为本月第一天
+                defaultStartDate = monthData[0].date;
+                
+                // 找到本月最后一天
+                let lastMonthData = monthData[monthData.length - 1];
+                let endIdx = globalData.findIndex(item => item.date === lastMonthData.date);
+                
+                // 如果本月最后一天正好是“昨天”，就往前退一天
+                if (lastMonthData.date === yesterdayStr && endIdx > 0) {
+                    endIdx--;
+                }
+                defaultEndDate = globalData[endIdx].date;
+            } else {
+                // 如果本月还没数据（比如刚跨月），则默认显示全部数据的首尾
+                defaultStartDate = globalData[0].date;
+                defaultEndDate = globalData[globalData.length - 1].date;
+            }
+
+            // 防呆校验：如果因为扣除昨天导致起点晚于终点（比如本月只有昨天一条数据），则恢复默认
+            let sIdx = globalData.findIndex(item => item.date === defaultStartDate);
+            let eIdx = globalData.findIndex(item => item.date === defaultEndDate);
+            if (sIdx > eIdx) {
+                defaultEndDate = monthData[monthData.length - 1].date;
+                eIdx = globalData.findIndex(item => item.date === defaultEndDate);
+            }
+
+            // 设置下拉框选中状态
+            startSel.value = defaultStartDate;
+            endSel.value = defaultEndDate;
+            // ================= 智能默认逻辑结束 =================
+
+            // 第一次渲染数据
+            renderHistoryChart(globalData.slice(sIdx, eIdx + 1));
         })
         .catch(error => {
             document.getElementById('empty-state').style.display = 'block';
@@ -130,14 +170,11 @@
         const startDate = document.getElementById('start-date').value;
         const endDate = document.getElementById('end-date').value;
         
-        // 找到索引
         let startIdx = globalData.findIndex(item => item.date === startDate);
         let endIdx = globalData.findIndex(item => item.date === endDate);
 
-        // 防呆：如果起始日期晚于结束日期，交换一下
         if (startIdx > endIdx) [startIdx, endIdx] = [endIdx, startIdx];
 
-        // 截取区间数据
         const filteredData = globalData.slice(startIdx, endIdx + 1);
         renderHistoryChart(filteredData);
     }
@@ -147,11 +184,9 @@
         const labels = dataArray.map(item => item.date);
         const revenues = dataArray.map(item => item.revenue);
 
-        // 计算极值
         const maxRev = Math.max(...revenues);
         const minRev = Math.min(...revenues);
 
-        // 为每一天分配颜色
         const bgColors = revenues.map(val => {
             if (val === maxRev) return '#ff9500'; // 最高亮橙色
             if (val === minRev) return '#d1d1d6'; // 最低灰掉
