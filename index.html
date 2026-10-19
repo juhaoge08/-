@@ -7,7 +7,6 @@
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 20px; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
-        /* 顶部总余额卡片 */
         .top-balance { background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 30px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 20px; margin-bottom: 40px; box-sizing: border-box; }
         .top-balance p { margin: 0; font-size: 16px; opacity: 0.9; }
         .top-balance h2 { margin: 10px 0 0 0; font-size: 48px; font-weight: bold; }
@@ -20,13 +19,10 @@
         .icon { font-size: 50px; margin-bottom: 15px; }
         .title { font-size: 20px; font-weight: 600; }
         .subtitle { font-size: 14px; color: #86868b; margin-top: 8px; }
-        .disabled { opacity: 0.5; cursor: not-allowed; }
-        .disabled:hover { transform: none; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-color: transparent; }
     </style>
 </head>
 <body>
 
-<!-- 最新余额展示区 -->
 <div class="top-balance">
     <p>最新账户总余额</p>
     <h2 id="home-balance">载入中...</h2>
@@ -38,25 +34,25 @@
     <div class="menu-grid">
         <a href="data.html" class="menu-card">
             <div class="icon">📈</div>
-            <div class="title">当日营业额</div>
+            <div class="title">昨日营业额</div>
             <div class="subtitle">看数据 & 图表对比</div>
         </a>
-        <div class="menu-card disabled">
+        <a href="history.html" class="menu-card">
             <div class="icon">📅</div>
             <div class="title">历史汇总</div>
-            <div class="subtitle">敬请期待...</div>
-        </div>
+            <div class="subtitle">查账本 & 极值高亮</div>
+        </a>
     </div>
 </div>
 
 <script>
-    // 读取账本，显示最新余额
     fetch('data.json')
         .then(response => response.json())
         .then(data => {
             if (data && data.length > 0) {
-                const latestData = data[data.length - 1]; // 拿最后一天的数据
-                document.getElementById('home-balance').innerText = '¥ ' + latestData.balance.toLocaleString();
+                const latestData = data[data.length - 1]; 
+                // 这里已经替换为 $
+                document.getElementById('home-balance').innerText = '$ ' + latestData.balance.toLocaleString();
             } else {
                 document.getElementById('home-balance').innerText = '暂无数据';
             }
