@@ -10,38 +10,59 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 15px; margin: 0; }
         .container { max-width: 800px; margin: 0 auto; }
         
-        /* 顶部导航优化：防止重叠 */
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
         .back-btn { font-size: 14px; color: #007aff; text-decoration: none; background: #e5e5ea; padding: 6px 12px; border-radius: 12px; font-weight: bold; }
-        .header h1 { font-size: 20px; margin: 0; padding-right: 60px; /* 保持绝对居中 */ }
+        .header h1 { font-size: 20px; margin: 0; padding-right: 60px; }
 
-        /* 偷懒提示区 */
         .empty-state { text-align: center; padding: 50px 20px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .empty-state h2 { font-size: 20px; color: #86868b; font-weight: 500; line-height: 1.5; margin-top: 15px; }
         .empty-state .emoji { font-size: 50px; }
 
         .data-content { display: none; } 
         
-        /* 数字卡片 */
         .cards { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
         .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); text-align: center; }
         .card p { margin: 0; color: #86868b; font-size: 13px; }
         .number { font-size: clamp(28px, 8vw, 42px); font-weight: 700; color: #1d1d1f; margin-top: 10px; white-space: nowrap; }
         .number.blue { color: #007aff; }
 
-        /* 切换按钮优化 */
+        /* 图片展示区 */
+        .image-card { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); margin-bottom: 20px; display: none; text-align: center; }
+        .image-card p { margin: 0 0 10px 0; color: #86868b; font-size: 13px; text-align: left; }
+        .image-card img { width: 100%; max-height: 400px; object-fit: cover; border-radius: 10px; }
+
         .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; justify-content: center; }
         .tab-btn { background: white; border: 1px solid #d2d2d7; color: #1d1d1f; padding: 8px 14px; border-radius: 20px; cursor: pointer; font-size: 13px; transition: 0.2s; }
         .tab-btn.active { background: #007aff; color: white; border-color: #007aff; box-shadow: 0 4px 10px rgba(0,122,255,0.2); }
 
-        /* 自由对比面板优化 */
         .custom-compare { display: none; flex-direction: column; gap: 10px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .custom-compare select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; outline: none; background: #f5f5f7; }
         .compare-btn { background: #34c759; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; }
 
-        .chart-container { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 300px; }
+        .chart-container { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 300px; margin-bottom: 30px; }
         
-        /* 电脑端恢复并排 */
+        /* ================= 橘子互动区 ================= */
+        .orange-zone { text-align: center; margin-bottom: 50px; user-select: none; }
+        .orange-zone p { color: #86868b; font-size: 13px; margin-bottom: 10px; }
+        .orange { 
+            font-size: 80px; 
+            cursor: pointer; 
+            display: inline-block;
+            transition: transform 0.1s ease;
+            transform-origin: bottom center; /* 从底部压扁 */
+        }
+        /* 鼠标按下时的压扁效果 */
+        .orange:active { transform: scale(1.1, 0.7); }
+        
+        /* JS 触发的 Q弹 动画 */
+        @keyframes bounce {
+            0% { transform: scale(1.2, 0.6); }
+            50% { transform: scale(0.9, 1.1); }
+            75% { transform: scale(1.05, 0.95); }
+            100% { transform: scale(1, 1); }
+        }
+        .orange.clicked { animation: bounce 0.4s ease-out; }
+
         @media (min-width: 500px) {
             .cards { flex-direction: row; }
             .card { flex: 1; }
@@ -76,6 +97,11 @@
             </div>
         </div>
 
+        <div class="image-card" id="daily-image-card">
+            <p>昨日凭据 / 照片</p>
+            <img id="daily-image" src="" alt="暂无图片">
+        </div>
+
         <div class="tabs">
             <button class="tab-btn" onclick="changeChart('yesterday', this)">只看昨日</button>
             <button class="tab-btn active" onclick="changeChart('7days', this)">近7天对比</button>
@@ -93,6 +119,13 @@
         <div class="chart-container">
             <canvas id="myChart"></canvas>
         </div>
+
+        <!-- ================= 互动橘子 ================= -->
+        <div class="orange-zone">
+            <p>戳一下橘子，测试扣款（仅本页面有效）</p>
+            <div class="orange" id="orange-btn" onclick="clickOrange(this)">🍊</div>
+        </div>
+
     </div>
 </div>
 
@@ -112,6 +145,7 @@
     });
 
     let globalData = []; 
+    let currentBalance = 0; // 记录当前余额用于扣款
 
     function animateValue(id, start, end, duration) {
         const obj = document.getElementById(id);
@@ -158,12 +192,40 @@
             animateValue("total-amount", 0, Number(latestDay.revenue), 1500);
             animateValue("balance-amount", 0, Number(latestDay.balance), 1500);
 
+            // 记录当前余额，供橘子扣除
+            currentBalance = Number(latestDay.balance);
+
+            if (latestDay.image && latestDay.image.trim() !== "") {
+                document.getElementById('daily-image').src = latestDay.image;
+                document.getElementById('daily-image-card').style.display = 'block';
+            } else {
+                document.getElementById('daily-image-card').style.display = 'none';
+            }
+
             initSelectOptions();
             changeChart('7days', document.querySelector('.tab-btn.active'));
         })
         .catch(error => {
             document.getElementById('empty-state').style.display = 'block';
         });
+
+    // 橘子弹跳 + 扣钱逻辑
+    function clickOrange(el) {
+        // 1. 触发 Q弹 动画
+        el.classList.remove('clicked');
+        void el.offsetWidth; // 强制浏览器重绘，让动画可以连续触发
+        el.classList.add('clicked');
+
+        // 2. 扣款逻辑
+        if (currentBalance > 0) {
+            currentBalance -= 1;
+            // 更新页面上的余额数字
+            document.getElementById('balance-amount').innerText = '$' + currentBalance.toLocaleString();
+        } else {
+            // 如果没钱了，弹个提示（可选）
+            // alert('橘耗鸽大王破产啦！');
+        }
+    }
 
     function initSelectOptions() {
         const sel1 = document.getElementById('date-select-1');
