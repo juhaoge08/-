@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>营业额与金额查询</title>
+    <title>营业额与金额查询 - 旧店</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
         /* 顶部余额卡片优化 */
-        .top-balance { background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 10px; margin-bottom: 30px; }
+        .top-balance { background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 10px; margin-bottom: 30px; transition: background 0.2s; }
         .top-balance p { margin: 0; font-size: 14px; opacity: 0.9; letter-spacing: 1px; }
         /* 使用 clamp 让字号在手机上自适应，绝对不换行 */
         .top-balance h2 { margin: 10px 0 0 0; font-size: clamp(28px, 8vw, 48px); font-weight: bold; white-space: nowrap; }
@@ -25,6 +25,46 @@
         .title { font-size: 18px; font-weight: 600; }
         .subtitle { font-size: 13px; color: #86868b; margin-top: 5px; }
 
+        /* ================= 橘子动画核心区 ================= */
+        .orange-container {
+            margin-top: 40px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .orange {
+            font-size: 70px; /* 橘子大小 */
+            cursor: pointer;
+            user-select: none; /* 防止双击选中文字 */
+            transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1); /* Q弹过渡效果 */
+            display: inline-block;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.15)); /* 给橘子加个阴影 */
+        }
+
+        /* 被点击（按住）时的状态：X轴变宽，Y轴压扁 */
+        .orange:active {
+            transform: scale(1.3, 0.6) translateY(20px);
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15));
+        }
+
+        /* 加个飘字特效（-$1） */
+        .minus-one {
+            position: absolute;
+            color: #ff3b30;
+            font-weight: bold;
+            font-size: 20px;
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+            z-index: 999;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+        }
+
         /* 如果屏幕宽（电脑端），恢复左右并排 */
         @media (min-width: 500px) {
             .menu-grid { flex-direction: row; }
@@ -34,7 +74,7 @@
 </head>
 <body>
 
-<div class="top-balance">
+<div class="top-balance" id="balance-card">
     <p>最新账户总余额</p>
     <h2 id="home-balance">载入中...</h2>
 </div>
@@ -54,16 +94,24 @@
             <div class="subtitle">查账本 & 极值高亮</div>
         </a>
     </div>
+
+    <!-- 橘子放在这里，在菜单按钮下方 -->
+    <div class="orange-container">
+        <div class="orange" id="magic-orange">🍊</div>
+    </div>
 </div>
 
 <script>
+    let currentBalance = 0; // 记录当前余额，用于点击扣钱
+
+    // 读取数据
     fetch('data.json')
         .then(response => response.json())
         .then(data => {
             if (data && data.length > 0) {
                 const latestData = data[data.length - 1]; 
-                // 把 $ 和数字连在一起，不换行
-                document.getElementById('home-balance').innerText = '$' + latestData.balance.toLocaleString();
+                currentBalance = Number(latestData.balance);
+                document.getElementById('home-balance').innerText = '$' + currentBalance.toLocaleString();
             } else {
                 document.getElementById('home-balance').innerText = '暂无数据';
             }
@@ -71,6 +119,38 @@
         .catch(err => {
             document.getElementById('home-balance').innerText = '读取失败';
         });
+
+    // 橘子点击交互
+    const orange = document.getElementById('magic-orange');
+    const balanceText = document.getElementById('home-balance');
+    const balanceCard = document.getElementById('balance-card');
+
+    orange.addEventListener('click', function(e) {
+        // 1. 扣钱逻辑
+        if (currentBalance > 0) {
+            currentBalance -= 1;
+            balanceText.innerText = '$' + currentBalance.toLocaleString();
+            
+            // 让顶部的卡片变红闪一下，提示扣钱了
+            balanceCard.style.background = '#ff3b30';
+            setTimeout(() => { balanceCard.style.background = ''; }, 200); // 0.2秒后恢复
+        }
+
+        // 2. 飘字动画特效 (-$1)
+        const minusOne = document.createElement('div');
+        minusOne.className = 'minus-one';
+        minusOne.innerText = '-$1';
+        
+        // 获取橘子当前的屏幕位置，让文字从橘子上方飘出来
+        const rect = orange.getBoundingClientRect();
+        minusOne.style.left = (rect.left + rect.width / 2 - 15) + 'px';
+        minusOne.style.top = (rect.top - 10) + 'px';
+        
+        document.body.appendChild(minusOne);
+
+        // 动画结束后移除文字元素
+        setTimeout(() => { minusOne.remove(); }, 800);
+    });
 </script>
 
 </body>
