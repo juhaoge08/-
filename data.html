@@ -3,149 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>橘耗鸽大王的数据中心</title>
+    <title>昨日营业额 - 旧店</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 15px; margin: 0; }
+        .container { max-width: 800px; margin: 0 auto; }
         
-        .top-balance { background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 10px; margin-bottom: 30px; transition: 0.3s; }
-        .top-balance p { margin: 0; font-size: 14px; opacity: 0.9; letter-spacing: 1px; }
-        .top-balance h2 { margin: 10px 0 0 0; font-size: clamp(28px, 8vw, 48px); font-weight: bold; white-space: nowrap; }
+        /* 顶部导航防重叠 */
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .back-btn { font-size: 14px; color: #007aff; text-decoration: none; background: #e5e5ea; padding: 8px 12px; border-radius: 12px; font-weight: bold; }
+        .header h1 { font-size: 20px; margin: 0; padding-right: 70px; }
 
-        .menu-container { width: 100%; max-width: 600px; text-align: center; flex-grow: 1; }
-        h1 { font-size: 22px; margin-bottom: 25px; color: #1d1d1f; }
+        .empty-state { text-align: center; padding: 50px 20px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .empty-state h2 { font-size: 20px; color: #86868b; font-weight: 500; line-height: 1.5; margin-top: 15px; }
+        .empty-state .emoji { font-size: 50px; }
+
+        .data-content { display: none; } 
         
-        .menu-grid { display: flex; gap: 15px; justify-content: center; flex-direction: column; }
-        .menu-card { background: white; width: 100%; padding: 25px; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-decoration: none; color: #1d1d1f; box-shadow: 0 8px 20px rgba(0,0,0,0.04); transition: all 0.2s ease; border: 2px solid transparent; }
-        .menu-card:active { transform: scale(0.98); background: #fafafa; }
-        .icon { font-size: 40px; margin-bottom: 10px; }
-        .title { font-size: 18px; font-weight: 600; }
-        .subtitle { font-size: 13px; color: #86868b; margin-top: 5px; }
+        /* 数字卡片 */
+        .cards { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); text-align: center; }
+        .card p { margin: 0; color: #86868b; font-size: 13px; }
+        .number { font-size: clamp(28px, 8vw, 42px); font-weight: 700; color: #1d1d1f; margin-top: 10px; white-space: nowrap; }
+        .number.blue { color: #007aff; }
 
-        /* ================= 橘子动画核心区 ================= */
-        .orange-container {
-            margin-top: 40px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+        /* 切换按钮 */
+        .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; justify-content: center; }
+        .tab-btn { background: white; border: 1px solid #d2d2d7; color: #1d1d1f; padding: 8px 14px; border-radius: 20px; cursor: pointer; font-size: 13px; transition: 0.2s; }
+        .tab-btn.active { background: #007aff; color: white; border-color: #007aff; box-shadow: 0 4px 10px rgba(0,122,255,0.2); }
+
+        /* 自由对比面板 */
+        .custom-compare { display: none; flex-direction: column; gap: 10px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .custom-compare select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; outline: none; background: #f5f5f7; }
+        .compare-btn { background: #34c759; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; }
+
+        .chart-container { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 300px; }
         
-        .orange {
-            font-size: 70px; /* 橘子大小 */
-            cursor: pointer;
-            user-select: none; /* 防止双击选中文字 */
-            transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1); /* Q弹过渡效果 */
-            display: inline-block;
-            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.2)); /* 给橘子加个阴影 */
-        }
-
-        /* 被点击（按住）时的状态：X轴变宽，Y轴压扁 */
-        .orange:active {
-            transform: scale(1.3, 0.6) translateY(20px);
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
-        }
-
-        /* 加个飘字特效（-1） */
-        .minus-one {
-            position: absolute;
-            color: #ff3b30;
-            font-weight: bold;
-            font-size: 20px;
-            pointer-events: none;
-            animation: floatUp 0.8s ease-out forwards;
-        }
-
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
-        }
-
         @media (min-width: 500px) {
-            .menu-grid { flex-direction: row; }
-            .menu-card { width: 240px; height: 180px; }
+            .cards { flex-direction: row; }
+            .card { flex: 1; }
+            .custom-compare { flex-direction: row; align-items: center; }
+            .custom-compare select { width: auto; }
+            .header h1 { padding-right: 0; }
         }
     </style>
 </head>
 <body>
 
-<div class="top-balance" id="balance-card">
-    <p>最新账户总余额</p>
-    <h2 id="home-balance">载入中...</h2>
-</div>
-
-<div class="menu-container">
-    <h1>🦤 橘耗鸽大王中心</h1>
-    
-    <div class="menu-grid">
-        <a href="data.html" class="menu-card">
-            <div class="icon">📈</div>
-            <div class="title">昨日营业额</div>
-            <div class="subtitle">看数据 & 图表对比</div>
-        </a>
-        <a href="history.html" class="menu-card">
-            <div class="icon">📅</div>
-            <div class="title">历史汇总</div>
-            <div class="subtitle">查账本 & 极值高亮</div>
-        </a>
+<div class="container">
+    <div class="header">
+        <a href="index.html" class="back-btn">← 主页</a>
+        <h1>📊 昨日营业额</h1>
     </div>
 
-    <!-- 橘子在这里！ -->
-    <div class="orange-container" id="orange-wrapper">
-        <div class="orange" id="magic-orange">🍊</div>
+    <div id="empty-state" class="empty-state" style="display: none;">
+        <div class="emoji">🦤💤</div>
+        <h2 id="lazy-text">橘耗鸽大王正在偷懒，稍安勿躁哦～</h2>
+    </div>
+
+    <div id="data-content" class="data-content">
+        <div class="cards">
+            <div class="card">
+                <p id="kpi-date-title">昨日营业额</p>
+                <div class="number" id="total-amount">0</div>
+            </div>
+            <div class="card">
+                <p>昨日账户余额</p>
+                <div class="number blue" id="balance-amount">0</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn" onclick="changeChart('yesterday', this)">只看昨日</button>
+            <button class="tab-btn active" onclick="changeChart('7days', this)">近7天对比</button>
+            <button class="tab-btn" onclick="changeChart('month', this)">本月对比</button>
+            <button class="tab-btn" onclick="toggleCustomCompare(this)">自由选择日期</button>
+        </div>
+
+        <div class="custom-compare" id="custom-compare-panel">
+            <select id="date-select-1"></select>
+            <span style="text-align: center; color: #86868b;">对比</span>
+            <select id="date-select-2"></select>
+            <button class="compare-btn" onclick="doCustomCompare()">生成图表</button>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="myChart"></canvas>
+        </div>
     </div>
 </div>
 
 <script>
-    let currentBalance = 0; // 记录当前余额，方便点击时扣减
+    const lazyTexts = [
+        "橘耗鸽大王正在偷懒，稍安勿躁哦～",
+        "橘耗鸽大王正在偷吃，饮茶先啦～",
+        "昨日的数据还没上传，大王正在催账中..."
+    ];
+    document.getElementById('lazy-text').innerText = lazyTexts[Math.floor(Math.random() * lazyTexts.length)];
 
-    // 初始化加载数据
+    const ctx = document.getElementById('myChart').getContext('2d');
+    let myChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: [], datasets: [{ label: '营业额', data: [], backgroundColor: 'rgba(0, 122, 255, 0.6)', borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    let globalData = []; 
+
+    function animateValue(id, start, end, duration) {
+        const obj = document.getElementById(id);
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const current = Math.floor((1 - Math.pow(1 - progress, 4)) * (end - start) + start);
+            obj.innerHTML = '$' + current.toLocaleString();
+            if (progress < 1) window.requestAnimationFrame(step);
+            else obj.innerHTML = '$' + (isNaN(end) ? 0 : end).toLocaleString();
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    const today = new Date();
+    let yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const yMonth = (yesterday.getMonth() + 1) + '月';
+    const yDay = yesterday.getDate() + '日';
+    const yesterdayStr = yMonth + yDay;
+    const currentMonthStr = (today.getMonth() + 1) + '月';
+
     fetch('data.json')
         .then(response => response.json())
         .then(data => {
-            if (data && data.length > 0) {
-                const latestData = data[data.length - 1]; 
-                currentBalance = latestData.balance;
-                document.getElementById('home-balance').innerText = '$' + currentBalance.toLocaleString();
-            } else {
-                document.getElementById('home-balance').innerText = '暂无数据';
+            if (!data || data.length === 0) {
+                document.getElementById('empty-state').style.display = 'block';
+                return;
             }
+            
+            globalData = data;
+            const latestDay = data[data.length - 1];
+
+            if (latestDay.date !== yesterdayStr) {
+                document.getElementById('empty-state').style.display = 'block';
+                return; 
+            }
+
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('data-content').style.display = 'block';
+
+            document.getElementById('kpi-date-title').innerText = latestDay.date + ' 营业额';
+            animateValue("total-amount", 0, Number(latestDay.revenue), 1500);
+            animateValue("balance-amount", 0, Number(latestDay.balance), 1500);
+
+            initSelectOptions();
+            changeChart('7days', document.querySelector('.tab-btn.active'));
         })
-        .catch(err => {
-            document.getElementById('home-balance').innerText = '读取失败';
+        .catch(error => {
+            document.getElementById('empty-state').style.display = 'block';
         });
 
-    // 橘子点击事件
-    const orange = document.getElementById('magic-orange');
-    const balanceText = document.getElementById('home-balance');
+    function initSelectOptions() {
+        const sel1 = document.getElementById('date-select-1');
+        const sel2 = document.getElementById('date-select-2');
+        sel1.innerHTML = ''; sel2.innerHTML = '';
+        for (let i = globalData.length - 1; i >= 0; i--) {
+            const date = globalData[i].date;
+            sel1.innerHTML += `<option value="${date}">${date}</option>`;
+            sel2.innerHTML += `<option value="${date}">${date}</option>`;
+        }
+        if (globalData.length >= 2) { sel1.selectedIndex = 1; sel2.selectedIndex = 0; }
+    }
 
-    orange.addEventListener('click', function(e) {
-        // 1. 扣钱逻辑
-        if (currentBalance > 0) {
-            currentBalance -= 1;
-            balanceText.innerText = '$' + currentBalance.toLocaleString();
-            
-            // 让顶部的数字卡片闪一下白色，提示扣钱了
-            const card = document.getElementById('balance-card');
-            card.style.backgroundColor = '#ff3b30'; // 变红
-            setTimeout(() => { card.style.backgroundColor = ''; }, 200); // 恢复蓝色
+    function changeChart(type, btnElement) {
+        document.getElementById('custom-compare-panel').style.display = 'none';
+        if (btnElement) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
         }
 
-        // 2. 飘字动画特效 (-$1)
-        const minusOne = document.createElement('div');
-        minusOne.className = 'minus-one';
-        minusOne.innerText = '-$1';
-        
-        // 获取橘子当前的屏幕位置，让文字从橘子头上飘出来
-        const rect = orange.getBoundingClientRect();
-        minusOne.style.left = (rect.left + rect.width / 2 - 10) + 'px';
-        minusOne.style.top = (rect.top - 10) + 'px';
-        
-        document.body.appendChild(minusOne);
+        let chartData = [];
+        if (type === 'yesterday') {
+            chartData = [globalData[globalData.length - 1]];
+        } else if (type === '7days') {
+            chartData = globalData.slice(-7);
+        } else if (type === 'month') {
+            chartData = globalData.filter(item => item.date.startsWith(currentMonthStr));
+            if(chartData.length === 0) chartData = [globalData[globalData.length - 1]];
+        }
+        updateChartData(chartData);
+    }
 
-        // 动画结束后移除文字元素
-        setTimeout(() => { minusOne.remove(); }, 800);
-    });
+    function toggleCustomCompare(btnElement) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        btnElement.classList.add('active');
+        document.getElementById('custom-compare-panel').style.display = 'flex';
+    }
+
+    function doCustomCompare() {
+        const date1 = document.getElementById('date-select-1').value;
+        const date2 = document.getElementById('date-select-2').value;
+        const data1 = globalData.find(item => item.date === date1);
+        const data2 = globalData.find(item => item.date === date2);
+
+        let compareData = [];
+        if(data1) compareData.push(data1);
+        if(data2 && date1 !== date2) compareData.push(data2); 
+        compareData.sort((a, b) => new Date(a.date) - new Date(b.date));
+        updateChartData(compareData);
+    }
+
+    function updateChartData(dataArray) {
+        myChart.data.labels = dataArray.map(item => item.date);
+        myChart.data.datasets[0].data = dataArray.map(item => item.revenue);
+        myChart.data.datasets[0].backgroundColor = 'rgba(0, 122, 255, 0.6)';
+        myChart.update();
+    }
 </script>
-
 </body>
+</html>
