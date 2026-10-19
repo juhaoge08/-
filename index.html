@@ -8,19 +8,17 @@
         * { box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
-        /* 顶部余额卡片优化 */
+        /* 顶部余额卡片 */
         .top-balance { background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 10px; margin-bottom: 30px; }
         .top-balance p { margin: 0; font-size: 14px; opacity: 0.9; letter-spacing: 1px; }
         
-        /* 数字的专用样式：去掉了变红，加上了平滑缩放效果 */
         .top-balance h2 { margin: 10px 0 0 0; font-size: clamp(28px, 8vw, 48px); font-weight: bold; white-space: nowrap; transition: transform 0.1s ease; display: inline-block; }
-        /* 减钱时数字变大的类 */
         .top-balance h2.pop { transform: scale(1.1); }
 
         .menu-container { width: 100%; max-width: 600px; text-align: center; }
         h1 { font-size: 22px; margin-bottom: 25px; color: #1d1d1f; }
         
-        /* 按钮列表优化 */
+        /* 按钮列表 */
         .menu-grid { display: flex; gap: 15px; justify-content: center; flex-direction: column; }
         .menu-card { background: white; width: 100%; padding: 25px; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-decoration: none; color: #1d1d1f; box-shadow: 0 8px 20px rgba(0,0,0,0.04); transition: all 0.2s ease; border: 2px solid transparent; }
         .menu-card:active { transform: scale(0.98); background: #fafafa; }
@@ -28,50 +26,53 @@
         .title { font-size: 18px; font-weight: 600; }
         .subtitle { font-size: 13px; color: #86868b; margin-top: 5px; }
 
-        /* ================= 橘子动画核心区 ================= */
-        .orange-container {
-            margin-top: 40px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        /* 新增的小字提示 */
+        .tips-text { color: #a1a1a6; font-size: 13px; margin-top: 30px; letter-spacing: 1px; }
+
+        /* ================= 悬浮窗吉祥物核心区 ================= */
+        .floating-mascot-container {
+            position: fixed; /* 固定定位，不随滚动条移动 */
+            bottom: 30px;    /* 距离底部 30px */
+            right: 20px;     /* 距离右侧 20px */
+            z-index: 9999;   /* 保证它在最上层 */
         }
         
-        .orange {
-            font-size: 70px;
+        .mascot {
+            font-size: 65px; /* 吉祥物大小 */
             cursor: pointer;
             user-select: none;
             transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
             display: inline-block;
-            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.15));
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.25)); /* 加深阴影，更有悬浮感 */
         }
 
-        /* 被点击（按住）时的状态：X轴变宽，Y轴压扁 */
-        .orange:active {
-            transform: scale(1.3, 0.6) translateY(20px);
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15));
+        /* 点击压扁的 Q弹效果 */
+        .mascot:active {
+            transform: scale(1.3, 0.6) translateY(15px);
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
         }
 
         /* 飘字特效（-$1） */
         .minus-one {
-            position: absolute;
+            position: fixed; /* 也改成固定定位，防止页面滚动时错位 */
             color: #ff3b30;
             font-weight: bold;
-            font-size: 20px;
+            font-size: 22px;
             pointer-events: none;
             animation: floatUp 0.8s ease-out forwards;
-            z-index: 999;
+            z-index: 10000;
         }
 
         @keyframes floatUp {
             0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+            100% { opacity: 0; transform: translateY(-60px) scale(1.5); }
         }
 
-        /* 如果屏幕宽（电脑端），恢复左右并排 */
+        /* 电脑端宽屏适配 */
         @media (min-width: 500px) {
             .menu-grid { flex-direction: row; }
             .menu-card { width: 240px; height: 180px; }
+            .floating-mascot-container { bottom: 50px; right: 50px; }
         }
     </style>
 </head>
@@ -98,15 +99,19 @@
         </a>
     </div>
 
-    <div class="orange-container">
-        <div class="orange" id="magic-orange">🍊</div>
-    </div>
+    <!-- 新增的 Tips 小字 -->
+    <p class="tips-text">Tips：更多功能，敬请期待（催我找人弄你）</p>
+</div>
+
+<!-- 悬浮窗吉祥物（目前是橘子） -->
+<div class="floating-mascot-container">
+    <!-- 以后想换别的，直接换掉这里的 🍊，比如换成 🦆 或者 <img src="图片链接"> -->
+    <div class="mascot" id="magic-mascot">🍊</div>
 </div>
 
 <script>
-    let currentBalance = 0; // 记录当前余额，用于点击扣钱
+    let currentBalance = 0; 
 
-    // 读取数据
     fetch('data.json')
         .then(response => response.json())
         .then(data => {
@@ -122,34 +127,30 @@
             document.getElementById('home-balance').innerText = '读取失败';
         });
 
-    // 橘子点击交互
-    const orange = document.getElementById('magic-orange');
+    // 吉祥物点击交互
+    const mascot = document.getElementById('magic-mascot');
     const balanceText = document.getElementById('home-balance');
 
-    orange.addEventListener('click', function(e) {
-        // 1. 扣钱逻辑
+    mascot.addEventListener('click', function(e) {
         if (currentBalance > 0) {
             currentBalance -= 1;
             balanceText.innerText = '$' + currentBalance.toLocaleString();
             
-            // 数字微调放大一下，0.1秒后恢复（替代原来的变红闪动）
             balanceText.classList.add('pop');
             setTimeout(() => { balanceText.classList.remove('pop'); }, 100); 
         }
 
-        // 2. 飘字动画特效 (-$1)
+        // 飘字特效
         const minusOne = document.createElement('div');
         minusOne.className = 'minus-one';
         minusOne.innerText = '-$1';
         
-        // 获取橘子当前的屏幕位置，让文字从橘子上方飘出来
-        const rect = orange.getBoundingClientRect();
+        const rect = mascot.getBoundingClientRect();
         minusOne.style.left = (rect.left + rect.width / 2 - 15) + 'px';
         minusOne.style.top = (rect.top - 10) + 'px';
         
         document.body.appendChild(minusOne);
 
-        // 动画结束后移除文字元素
         setTimeout(() => { minusOne.remove(); }, 800);
     });
 </script>
