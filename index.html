@@ -9,10 +9,13 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
         /* 顶部余额卡片优化 */
-        .top-balance { background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 10px; margin-bottom: 30px; transition: background 0.2s; }
+        .top-balance { background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 10px; margin-bottom: 30px; }
         .top-balance p { margin: 0; font-size: 14px; opacity: 0.9; letter-spacing: 1px; }
-        /* 使用 clamp 让字号在手机上自适应，绝对不换行 */
-        .top-balance h2 { margin: 10px 0 0 0; font-size: clamp(28px, 8vw, 48px); font-weight: bold; white-space: nowrap; }
+        
+        /* 数字的专用样式：去掉了变红，加上了平滑缩放效果 */
+        .top-balance h2 { margin: 10px 0 0 0; font-size: clamp(28px, 8vw, 48px); font-weight: bold; white-space: nowrap; transition: transform 0.1s ease; display: inline-block; }
+        /* 减钱时数字变大的类 */
+        .top-balance h2.pop { transform: scale(1.1); }
 
         .menu-container { width: 100%; max-width: 600px; text-align: center; }
         h1 { font-size: 22px; margin-bottom: 25px; color: #1d1d1f; }
@@ -20,7 +23,7 @@
         /* 按钮列表优化 */
         .menu-grid { display: flex; gap: 15px; justify-content: center; flex-direction: column; }
         .menu-card { background: white; width: 100%; padding: 25px; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-decoration: none; color: #1d1d1f; box-shadow: 0 8px 20px rgba(0,0,0,0.04); transition: all 0.2s ease; border: 2px solid transparent; }
-        .menu-card:active { transform: scale(0.98); background: #fafafa; } /* 手机点击反馈 */
+        .menu-card:active { transform: scale(0.98); background: #fafafa; }
         .icon { font-size: 40px; margin-bottom: 10px; }
         .title { font-size: 18px; font-weight: 600; }
         .subtitle { font-size: 13px; color: #86868b; margin-top: 5px; }
@@ -35,12 +38,12 @@
         }
         
         .orange {
-            font-size: 70px; /* 橘子大小 */
+            font-size: 70px;
             cursor: pointer;
-            user-select: none; /* 防止双击选中文字 */
-            transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1); /* Q弹过渡效果 */
+            user-select: none;
+            transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
             display: inline-block;
-            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.15)); /* 给橘子加个阴影 */
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.15));
         }
 
         /* 被点击（按住）时的状态：X轴变宽，Y轴压扁 */
@@ -49,7 +52,7 @@
             filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15));
         }
 
-        /* 加个飘字特效（-$1） */
+        /* 飘字特效（-$1） */
         .minus-one {
             position: absolute;
             color: #ff3b30;
@@ -95,7 +98,6 @@
         </a>
     </div>
 
-    <!-- 橘子放在这里，在菜单按钮下方 -->
     <div class="orange-container">
         <div class="orange" id="magic-orange">🍊</div>
     </div>
@@ -123,7 +125,6 @@
     // 橘子点击交互
     const orange = document.getElementById('magic-orange');
     const balanceText = document.getElementById('home-balance');
-    const balanceCard = document.getElementById('balance-card');
 
     orange.addEventListener('click', function(e) {
         // 1. 扣钱逻辑
@@ -131,9 +132,9 @@
             currentBalance -= 1;
             balanceText.innerText = '$' + currentBalance.toLocaleString();
             
-            // 让顶部的卡片变红闪一下，提示扣钱了
-            balanceCard.style.background = '#ff3b30';
-            setTimeout(() => { balanceCard.style.background = ''; }, 80); // 0.08秒后恢复
+            // 数字微调放大一下，0.1秒后恢复（替代原来的变红闪动）
+            balanceText.classList.add('pop');
+            setTimeout(() => { balanceText.classList.remove('pop'); }, 100); 
         }
 
         // 2. 飘字动画特效 (-$1)
