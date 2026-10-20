@@ -25,6 +25,18 @@
         .filter-bar select { flex: 1; min-width: 120px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; outline: none; background: #f5f5f7; }
         .compare-btn { width: 100%; background: #007aff; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; transition: 0.2s; }
 
+        /* ================= 新增的查询日历区 ================= */
+        .calendar-section { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); margin-bottom: 15px; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: bold; color: #1d1d1f; font-size: 15px;}
+        .arrow-btn { background: none; border: none; font-size: 16px; color: #007aff; cursor: pointer; padding: 5px 15px; border-radius: 8px; transition: 0.2s; }
+        .arrow-btn:hover { background: #f5f5f7; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+        .weekday { font-size: 12px; color: #86868b; margin-bottom: 5px; }
+        .day-cell { font-size: 14px; padding: 6px 0; border-radius: 8px; color: #1d1d1f; }
+        .day-cell.empty { visibility: hidden; }
+        .day-cell.in-range { background: #e5f0ff; color: #007aff; font-weight: bold; } /* 范围高亮 */
+        .day-cell.start-end { background: #007aff; color: white; border-radius: 50%; } /* 起止日高亮 */
+
         /* 图例 */
         .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; font-size: 12px; color: #86868b; }
         .legend-item { display: flex; align-items: center; gap: 5px; }
@@ -35,7 +47,6 @@
 
         .chart-container { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 280px; margin-bottom: 10px; }
         
-        /* 新增的统计文字样式 */
         .stats-info { text-align: center; font-size: 16px; color: #1d1d1f; font-weight: 500; min-height: 20px; padding: 10px 0; line-height: 1.6; }
         .stats-info span { color: #007aff; font-weight: 700; font-size: 18px; }
 
@@ -68,6 +79,18 @@
             <button class="compare-btn" onclick="filterHistory()">查询数据</button>
         </div>
 
+        <!-- 查询日历展示区 -->
+        <div class="calendar-section">
+            <div class="calendar-header">
+                <button class="arrow-btn" onclick="changeMonth(-1)">◀</button>
+                <span id="calendar-title">加载中...</span>
+                <button class="arrow-btn" onclick="changeMonth(1)">▶</button>
+            </div>
+            <div class="calendar-grid" id="calendar-grid">
+                <!-- JS 动态生成 -->
+            </div>
+        </div>
+
         <div class="legend">
             <div class="legend-item"><span class="dot max"></span> 营业额最高</div>
             <div class="legend-item"><span class="dot min"></span> 营业额最低</div>
@@ -78,7 +101,6 @@
             <canvas id="historyChart"></canvas>
         </div>
 
-        <!-- 新增的统计文字展示区 -->
         <div class="stats-info" id="stats-display"></div>
     </div>
 </div>
@@ -93,6 +115,69 @@
 
     let globalData = []; 
     const statsDisplay = document.getElementById('stats-display');
+
+    // 日历相关变量
+    let currentCalDate = new Date(); // 当前日历显示的月份
+    let filterStartObj = null;       // 当前查询的起始日期对象
+    let filterEndObj = null;         // 当前查询的结束日期对象
+
+    // 解析日期字符串为对象 (兼容 2026年10月19日 和 10月19日)
+    function parseDateToObj(dateStr) {
+        const match = dateStr.match(/(?:(\d+)年)?(\d+)月(\d+)日/);
+        if (match) {
+            return {
+                year: match[1] ? Number(match[1]) : new Date().getFullYear(),
+                month: Number(match[2]) - 1, // JS中月份是 0-11
+                day: Number(match[3])
+            };
+        }
+        return null;
+    }
+
+    // 渲染日历
+    function renderCalendar() {
+        const year = currentCalDate.getFullYear();
+        const month = currentCalDate.getMonth();
+        document.getElementById('calendar-title').innerText = `${year}年${month + 1}月`;
+        
+        const grid = document.getElementById('calendar-grid');
+        grid.innerHTML = '<div class="weekday">日</div><div class="weekday">一</div><div class="weekday">二</div><div class="weekday">三</div><div class="weekday">四</div><div class="weekday">五</div><div class="weekday">六</div>';
+        
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        // 补全月初的空白
+        for(let i=0; i<firstDay; i++) {
+            grid.innerHTML += `<div class="day-cell empty"></div>`;
+        }
+        
+        let startTs = filterStartObj ? new Date(filterStartObj.year, filterStartObj.month, filterStartObj.day).getTime() : null;
+        let endTs = filterEndObj ? new Date(filterEndObj.year, filterEndObj.month, filterEndObj.day).getTime() : null;
+
+        // 填充日期
+        for(let i=1; i<=daysInMonth; i++) {
+            let cellTs = new Date(year, month, i).getTime();
+            let classes = 'day-cell';
+            
+            // 判断是否在查询范围内
+            if (startTs !== null && endTs !== null) {
+                if (cellTs >= startTs && cellTs <= endTs) {
+                    classes += ' in-range';
+                    // 如果是起始或结束日
+                    if (cellTs === startTs || cellTs === endTs) {
+                        classes += ' start-end';
+                    }
+                }
+            }
+            grid.innerHTML += `<div class="${classes}">${i}</div>`;
+        }
+    }
+
+    // 切换月份
+    function changeMonth(offset) {
+        currentCalDate.setMonth(currentCalDate.getMonth() + offset);
+        renderCalendar();
+    }
 
     fetch('data.json')
         .then(response => response.json())
@@ -114,30 +199,25 @@
             });
 
             const today = new Date();
-            let yesterday = new Date(today);
-            yesterday.setDate(today.getDate() - 1);
-            const yesterdayStr = (yesterday.getMonth() + 1) + '月' + yesterday.getDate() + '日';
             const currentMonthStr = (today.getMonth() + 1) + '月';
 
             let monthData = globalData.filter(item => item.date.startsWith(currentMonthStr));
             let defaultStartDate, defaultEndDate;
 
+            // 【核心修改】只要有本月数据，就默认显示本月1号到最后一天，不再跳过昨天
             if (monthData.length > 0) {
                 defaultStartDate = monthData[0].date;
-                let lastMonthData = monthData[monthData.length - 1];
-                let endIdx = globalData.findIndex(item => item.date === lastMonthData.date);
-                
-                if (lastMonthData.date === yesterdayStr && endIdx > 0) {
-                    endIdx--;
-                }
-                defaultEndDate = globalData[endIdx].date;
+                defaultEndDate = monthData[monthData.length - 1].date;
             } else {
+                // 如果本月没数据，默认显示所有数据的首尾
                 defaultStartDate = globalData[0].date;
                 defaultEndDate = globalData[globalData.length - 1].date;
             }
 
             let sIdx = globalData.findIndex(item => item.date === defaultStartDate);
             let eIdx = globalData.findIndex(item => item.date === defaultEndDate);
+            
+            // 防呆
             if (sIdx > eIdx) {
                 defaultEndDate = monthData[monthData.length - 1].date;
                 eIdx = globalData.findIndex(item => item.date === defaultEndDate);
@@ -146,6 +226,14 @@
             startSel.value = defaultStartDate;
             endSel.value = defaultEndDate;
 
+            // 更新日历的状态
+            filterStartObj = parseDateToObj(defaultStartDate);
+            filterEndObj = parseDateToObj(defaultEndDate);
+            if (filterStartObj) {
+                currentCalDate = new Date(filterStartObj.year, filterStartObj.month, 1); // 日历跳到起始月份
+            }
+
+            renderCalendar();
             renderHistoryChart(globalData.slice(sIdx, eIdx + 1));
         })
         .catch(error => {
@@ -157,7 +245,23 @@
         const endDate = document.getElementById('end-date').value;
         let startIdx = globalData.findIndex(item => item.date === startDate);
         let endIdx = globalData.findIndex(item => item.date === endDate);
-        if (startIdx > endIdx) [startIdx, endIdx] = [endIdx, startIdx];
+        
+        if (startIdx > endIdx) {
+            [startIdx, endIdx] = [endIdx, startIdx];
+            document.getElementById('start-date').value = endDate;
+            document.getElementById('end-date').value = startDate;
+        }
+
+        // 点击查询时，更新日历状态
+        filterStartObj = parseDateToObj(document.getElementById('start-date').value);
+        filterEndObj = parseDateToObj(document.getElementById('end-date').value);
+        
+        // 让日历自动跳到起始日期的月份
+        if (filterStartObj) {
+            currentCalDate = new Date(filterStartObj.year, filterStartObj.month, 1);
+        }
+        renderCalendar();
+
         renderHistoryChart(globalData.slice(startIdx, endIdx + 1));
     }
 
@@ -178,7 +282,6 @@
         historyChart.data.datasets[0].backgroundColor = bgColors;
         historyChart.update();
 
-        // 【新增】：计算并更新统计信息
         if (dataArray.length > 0) {
             let total = 0;
             dataArray.forEach(item => {
