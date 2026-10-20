@@ -6,72 +6,82 @@
     <title>营业额与金额查询 - 旧店</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
         
         /* 顶部余额卡片 */
-        .top-balance { background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 10px; margin-bottom: 30px; }
-        .top-balance p { margin: 0; font-size: 14px; opacity: 0.9; letter-spacing: 1px; }
-        
-        .top-balance h2 { margin: 10px 0 0 0; font-size: clamp(28px, 8vw, 48px); font-weight: bold; white-space: nowrap; transition: transform 0.1s ease; display: inline-block; }
-        .top-balance h2.pop { transform: scale(1.1); }
+        .top-balance { background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 10px; margin-bottom: 20px; position: relative; transition: background 0.5s; }
+        .top-balance p { margin: 0; font-size: 14px; opacity: 0.9; letter-spacing: 1px; transition: color 0.3s; }
+        .top-balance p.crit-text { color: #ff3b30; font-weight: bold; opacity: 1; }
+        .top-balance h2 { margin: 10px 0 0 0; font-size: clamp(28px, 8vw, 48px); font-weight: bold; white-space: nowrap; display: inline-block; }
+
+        /* 震动动画 */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-3px, -2px) rotate(-1deg); }
+            20% { transform: translate(-5px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        .shake { animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) both; }
 
         .menu-container { width: 100%; max-width: 600px; text-align: center; }
-        h1 { font-size: 22px; margin-bottom: 25px; color: #1d1d1f; }
+        h1 { font-size: 22px; margin-bottom: 20px; color: #1d1d1f; }
         
         /* 按钮列表 */
         .menu-grid { display: flex; gap: 15px; justify-content: center; flex-direction: column; }
-        .menu-card { background: white; width: 100%; padding: 25px; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-decoration: none; color: #1d1d1f; box-shadow: 0 8px 20px rgba(0,0,0,0.04); transition: all 0.2s ease; border: 2px solid transparent; }
+        .menu-card { background: white; width: 100%; padding: 20px; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-decoration: none; color: #1d1d1f; box-shadow: 0 8px 20px rgba(0,0,0,0.04); transition: all 0.2s ease; border: 2px solid transparent; }
         .menu-card:active { transform: scale(0.98); background: #fafafa; }
-        .icon { font-size: 40px; margin-bottom: 10px; }
+        .icon { font-size: 35px; margin-bottom: 8px; }
         .title { font-size: 18px; font-weight: 600; }
         .subtitle { font-size: 13px; color: #86868b; margin-top: 5px; }
 
-        /* 新增的小字提示 */
-        .tips-text { color: #a1a1a6; font-size: 13px; margin-top: 30px; letter-spacing: 1px; }
+        /* 扣款明细模块 */
+        .expense-section { background: white; width: 100%; margin-top: 25px; padding: 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); text-align: left; }
+        .expense-section h2 { font-size: 16px; margin: 0 0 15px 0; color: #1d1d1f; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px;}
+        .expense-list { list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; }
+        .expense-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #f0f0f0; font-size: 14px; }
+        .expense-item:last-child { border-bottom: none; }
+        .expense-memo { color: #1d1d1f; font-weight: 500; }
+        .expense-date { font-size: 11px; color: #a1a1a6; display: block; margin-top: 3px; }
+        .expense-amount { color: #ff3b30; font-weight: bold; }
+        .no-expense { color: #a1a1a6; font-size: 13px; text-align: center; padding: 10px 0; }
 
-        /* ================= 悬浮窗吉祥物核心区 ================= */
-        .floating-mascot-container {
-            position: fixed; /* 固定定位，不随滚动条移动 */
-            bottom: 30px;    /* 距离底部 30px */
-            right: 20px;     /* 距离右侧 20px */
-            z-index: 9999;   /* 保证它在最上层 */
-        }
-        
-        .mascot {
-            font-size: 65px; /* 吉祥物大小 */
-            cursor: pointer;
-            user-select: none;
-            transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
-            display: inline-block;
-            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.25)); /* 加深阴影，更有悬浮感 */
-        }
+        .tips-text { color: #a1a1a6; font-size: 13px; margin-top: 25px; letter-spacing: 1px; }
 
-        /* 点击压扁的 Q弹效果 */
-        .mascot:active {
-            transform: scale(1.3, 0.6) translateY(15px);
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-        }
+        /* ================= 悬浮窗橘子 ================= */
+        .floating-mascot-container { position: fixed; bottom: 30px; right: 20px; z-index: 9999; }
+        .mascot { font-size: 65px; cursor: pointer; user-select: none; transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1); display: inline-block; filter: drop-shadow(0 8px 12px rgba(0,0,0,0.25)); }
+        .mascot:active { transform: scale(1.3, 0.6) translateY(15px); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
 
-        /* 飘字特效（-$1） */
-        .minus-one {
-            position: fixed; /* 也改成固定定位，防止页面滚动时错位 */
-            color: #ff3b30;
-            font-weight: bold;
-            font-size: 22px;
-            pointer-events: none;
-            animation: floatUp 0.8s ease-out forwards;
-            z-index: 10000;
+        /* 暴击飘字特效 */
+        .crit-float {
+            position: fixed; color: #ff3b30; font-weight: 900; font-size: 28px;
+            text-shadow: 2px 2px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff;
+            pointer-events: none; animation: critUp 2s ease-out forwards; z-index: 10000;
+            text-align: center; width: 100%; left: 0; top: 100px;
+        }
+        .crit-float span { display: block; font-size: 14px; color: #333; margin-top: 5px; text-shadow: none; font-weight: bold; }
+
+        @keyframes critUp {
+            0% { opacity: 0; transform: translateY(20px) scale(0.5); }
+            20% { opacity: 1; transform: translateY(0) scale(1.2); }
+            40% { transform: translateY(-10px) scale(1); }
+            80% { opacity: 1; transform: translateY(-40px) scale(1); }
+            100% { opacity: 0; transform: translateY(-80px) scale(0.8); }
         }
 
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-60px) scale(1.5); }
-        }
+        .minus-one { position: fixed; color: #ff3b30; font-weight: bold; font-size: 20px; pointer-events: none; animation: floatUp 0.8s ease-out forwards; z-index: 10000; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-50px) scale(1.5); } }
 
-        /* 电脑端宽屏适配 */
         @media (min-width: 500px) {
             .menu-grid { flex-direction: row; }
-            .menu-card { width: 240px; height: 180px; }
+            .menu-card { width: 240px; height: 160px; }
             .floating-mascot-container { bottom: 50px; right: 50px; }
         }
     </style>
@@ -79,7 +89,7 @@
 <body>
 
 <div class="top-balance" id="balance-card">
-    <p>最新账户总余额</p>
+    <p id="balance-title">最新账户可用余额</p>
     <h2 id="home-balance">载入中...</h2>
 </div>
 
@@ -99,58 +109,147 @@
         </a>
     </div>
 
-    <!-- 新增的 Tips 小字 -->
-    <p class="tips-text">Tips：更多功能，敬请期待（催我找人弄你）</p>
+    <!-- 扣款明细模块 -->
+    <div class="expense-section">
+        <h2>💸 扣款明细</h2>
+        <ul class="expense-list" id="expense-list">
+            <li class="no-expense">正在加载明细...</li>
+        </ul>
+    </div>
+
+    <p class="tips-text">Tips：更多功能，敬请期待...</p>
 </div>
 
-<!-- 悬浮窗吉祥物（目前是橘子） -->
 <div class="floating-mascot-container">
-    <!-- 以后想换别的，直接换掉这里的 🍊，比如换成 🦆 或者 <img src="图片链接"> -->
     <div class="mascot" id="magic-mascot">🍊</div>
 </div>
 
 <script>
     let currentBalance = 0; 
-
-    fetch('data.json')
-        .then(response => response.json())
-        .then(data => {
-            if (data && data.length > 0) {
-                const latestData = data[data.length - 1]; 
-                currentBalance = Number(latestData.balance);
-                document.getElementById('home-balance').innerText = '$' + currentBalance.toLocaleString();
-            } else {
-                document.getElementById('home-balance').innerText = '暂无数据';
-            }
-        })
-        .catch(err => {
-            document.getElementById('home-balance').innerText = '读取失败';
-        });
-
-    // 吉祥物点击交互
-    const mascot = document.getElementById('magic-mascot');
     const balanceText = document.getElementById('home-balance');
+    const balanceCard = document.getElementById('balance-card');
+    const balanceTitle = document.getElementById('balance-title');
 
+    // 平滑滚动数字的函数
+    function animateBalance(start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+            const current = Math.floor((end - start) * easeOutQuart + start);
+            
+            balanceText.innerText = '$' + current.toLocaleString();
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                balanceText.innerText = '$' + end.toLocaleString();
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // 同时读取两个 JSON 文件
+    Promise.all([
+        fetch('data.json').then(res => res.json()).catch(() => []),
+        fetch('expenses.json').then(res => res.json()).catch(() => [])
+    ]).then(([data, expenses]) => {
+        
+        let baseBalance = 0;
+        if (data && data.length > 0) {
+            baseBalance = Number(data[data.length - 1].balance); // 从 data 拿基础余额
+        }
+
+        let totalExpense = 0;
+        const listEl = document.getElementById('expense-list');
+        listEl.innerHTML = '';
+
+        // 渲染扣款明细，并计算总支出
+        if (expenses && expenses.length > 0) {
+            // 倒序排列，最新的在上面
+            const reversedExpenses = [...expenses].reverse();
+            reversedExpenses.forEach(item => {
+                totalExpense += Number(item.amount);
+                listEl.innerHTML += `
+                    <li class="expense-item">
+                        <div>
+                            <div class="expense-memo">${item.memo}</div>
+                            <span class="expense-date">${item.date}</span>
+                        </div>
+                        <div class="expense-amount">-$${Number(item.amount).toLocaleString()}</div>
+                    </li>
+                `;
+            });
+        } else {
+            listEl.innerHTML = '<li class="no-expense">近期无扣款记录</li>';
+        }
+
+        // 真实可用余额 = data 里的余额 - expenses 里的总扣款
+        const realBalance = baseBalance - totalExpense;
+
+        // ===== 侦测新扣款暴击逻辑 =====
+        const lastExpenseIdStr = localStorage.getItem('last_expense_id');
+        
+        if (expenses && expenses.length > 0) {
+            const latestExpense = expenses[expenses.length - 1]; // 获取最新一条扣款
+            const latestId = latestExpense.id;
+
+            if (lastExpenseIdStr !== null) {
+                const lastId = Number(lastExpenseIdStr);
+                
+                // 如果发现最新扣款的 ID 比浏览器记住的 ID 大，说明有新扣款！
+                if (latestId > lastId) {
+                    
+                    // 1. 震动与变红
+                    balanceCard.classList.add('shake');
+                    setTimeout(() => balanceCard.classList.remove('shake'), 600);
+                    balanceTitle.classList.add('crit-text');
+                    balanceTitle.innerText = "💥 暴击扣款！";
+
+                    // 2. 弹出暴击数字和备注
+                    const critDiv = document.createElement('div');
+                    critDiv.className = 'crit-float';
+                    critDiv.innerHTML = `-$${Number(latestExpense.amount).toLocaleString()}<span>${latestExpense.memo}</span>`;
+                    document.body.appendChild(critDiv);
+                    setTimeout(() => critDiv.remove(), 2000);
+
+                    // 3. 数字慢慢掉下来 (从 没有这笔扣款的余额 慢慢掉到 扣了之后的余额)
+                    const balanceBeforeThisExpense = realBalance + Number(latestExpense.amount);
+                    animateBalance(balanceBeforeThisExpense, realBalance, 1500);
+                } else {
+                    balanceText.innerText = '$' + realBalance.toLocaleString();
+                }
+            } else {
+                // 第一次打开
+                balanceText.innerText = '$' + realBalance.toLocaleString();
+            }
+            
+            // 记住最新的 ID
+            localStorage.setItem('last_expense_id', latestId);
+        } else {
+            balanceText.innerText = '$' + realBalance.toLocaleString();
+        }
+
+        currentBalance = realBalance; 
+
+    }).catch(err => {
+        balanceText.innerText = '读取失败';
+    });
+
+    // 橘子点击交互
+    const mascot = document.getElementById('magic-mascot');
     mascot.addEventListener('click', function(e) {
         if (currentBalance > 0) {
             currentBalance -= 1;
             balanceText.innerText = '$' + currentBalance.toLocaleString();
-            
-            balanceText.classList.add('pop');
-            setTimeout(() => { balanceText.classList.remove('pop'); }, 100); 
         }
-
-        // 飘字特效
         const minusOne = document.createElement('div');
         minusOne.className = 'minus-one';
         minusOne.innerText = '-$1';
-        
         const rect = mascot.getBoundingClientRect();
         minusOne.style.left = (rect.left + rect.width / 2 - 15) + 'px';
         minusOne.style.top = (rect.top - 10) + 'px';
-        
         document.body.appendChild(minusOne);
-
         setTimeout(() => { minusOne.remove(); }, 800);
     });
 </script>
