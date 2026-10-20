@@ -119,7 +119,7 @@
 <script>
     let globalExpenses = []; // 存储原始数据
 
-    // 日期解析辅助函数 (兼容 2026年10月19日 和 10月19日)
+    // 日期解析辅助函数
     function parseDateToTimestamp(dateStr) {
         const match = dateStr.match(/(?:(\d+)年)?(\d+)月(\d+)日/);
         if (match) {
@@ -131,17 +131,17 @@
         return 0;
     }
 
-    // 渲染列表的函数（isAscending: true 为正序即旧到新，false 为降序即新到旧）
-    function renderList(dataArray, isAscending = false) {
+    // 渲染列表：默认就是降序（最新在上），不管怎么查都是最新的在最上面
+    function renderList(dataArray) {
         const listEl = document.getElementById('expense-list');
         listEl.innerHTML = '';
 
         if (dataArray && dataArray.length > 0) {
-            // 根据时间戳排序
+            // 强制降序排列（新日期在上）
             const sortedData = [...dataArray].sort((a, b) => {
                 const timeA = parseDateToTimestamp(a.date);
                 const timeB = parseDateToTimestamp(b.date);
-                return isAscending ? timeA - timeB : timeB - timeA;
+                return timeB - timeA; // 始终从大到小
             });
 
             sortedData.forEach(item => {
@@ -160,14 +160,15 @@
         }
     }
 
-    // 初始化下拉框选项
+    // 初始化下拉框：日期选项必须是从旧到新
     function initSelectOptions() {
         const startSel = document.getElementById('start-date');
         const endSel = document.getElementById('end-date');
         startSel.innerHTML = ''; endSel.innerHTML = '';
 
-        // 提取所有不重复的日期并正序排列
+        // 提取所有不重复的日期
         const uniqueDates = [...new Set(globalExpenses.map(item => item.date))];
+        // 强制正序排列（老日期在上面）
         uniqueDates.sort((a, b) => parseDateToTimestamp(a) - parseDateToTimestamp(b));
 
         uniqueDates.forEach(date => {
@@ -190,8 +191,8 @@
                 globalExpenses = expenses;
                 document.getElementById('filter-bar').style.display = 'flex';
                 initSelectOptions();
-                // 默认展示全部，降序排列（最新的在上）
-                renderList(globalExpenses, false);
+                // 默认展示全部，降序（最新的在上）
+                renderList(globalExpenses);
             } else {
                 document.getElementById('expense-list').innerHTML = '<li class="no-expense">近期无扣款记录，大王很节约～</li>';
             }
@@ -219,15 +220,15 @@
             return ts >= startTs && ts <= endTs;
         });
 
-        // 渲染查询结果（正序排列：旧到新）
-        renderList(filteredData, true);
+        // 渲染查询结果（依然调用 renderList，内部会保持从新到旧）
+        renderList(filteredData);
     }
 
     // 点击重置
     function resetExpenses() {
         initSelectOptions();
-        // 恢复默认展示全部，降序排列（最新的在上）
-        renderList(globalExpenses, false);
+        // 恢复默认展示全部，从新到旧
+        renderList(globalExpenses);
     }
 </script>
 
