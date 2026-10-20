@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>扣款明细 - 旧店</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 15px; margin: 0; }
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .back-btn { font-size: 14px; color: #007aff; text-decoration: none; background: #e5e5ea; padding: 8px 12px; border-radius: 12px; font-weight: bold; }
+        .header h1 { font-size: 20px; margin: 0; padding-right: 70px; }
+
+        .expense-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); }
+        
+        .expense-list { list-style: none; padding: 0; margin: 0; }
+        .expense-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px dashed #f0f0f0; font-size: 15px; }
+        .expense-item:last-child { border-bottom: none; }
+        .expense-memo { color: #1d1d1f; font-weight: 600; margin-bottom: 4px; }
+        .expense-date { font-size: 12px; color: #a1a1a6; }
+        .expense-amount { color: #ff3b30; font-weight: bold; font-size: 18px; }
+        
+        .no-expense { color: #a1a1a6; font-size: 14px; text-align: center; padding: 30px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <a href="index.html" class="back-btn">← 主页</a>
+        <h1>💸 扣款明细</h1>
+    </div>
+
+    <div class="expense-card">
+        <ul class="expense-list" id="expense-list">
+            <li class="no-expense">正在加载明细...</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    fetch('expenses.json')
+        .then(response => response.json())
+        .then(expenses => {
+            const listEl = document.getElementById('expense-list');
+            listEl.innerHTML = '';
+
+            if (expenses && expenses.length > 0) {
+                // 倒序显示，最新支出的在最上面
+                const reversedExpenses = [...expenses].reverse();
+                reversedExpenses.forEach(item => {
+                    listEl.innerHTML += `
+                        <li class="expense-item">
+                            <div>
+                                <div class="expense-memo">${item.memo}</div>
+                                <span class="expense-date">${item.date}</span>
+                            </div>
+                            <div class="expense-amount">-$${Number(item.amount).toLocaleString()}</div>
+                        </li>
+                    `;
+                });
+            } else {
+                listEl.innerHTML = '<li class="no-expense">近期无扣款记录，大王很节约～</li>';
+            }
+        })
+        .catch(err => {
+            document.getElementById('expense-list').innerHTML = '<li class="no-expense">读取失败，请检查 expenses.json</li>';
+        });
+</script>
+
+</body>
+</html>
