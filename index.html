@@ -96,6 +96,10 @@
 </head>
 <body>
 
+<!-- 音频文件：请确保你上传的文件名和下面的一致 -->
+<audio id="soundPress" src="ya1.mp3" preload="auto"></audio>
+<audio id="soundRelease" src="ya2.mp3" preload="auto"></audio>
+
 <div class="top-balance" id="balance-card">
     <p id="balance-title">最新账户可用余额</p>
     <h2 id="home-balance">载入中...</h2>
@@ -135,6 +139,10 @@
     const balanceText = document.getElementById('home-balance');
     const balanceCard = document.getElementById('balance-card');
     const balanceTitle = document.getElementById('balance-title');
+    
+    // 获取音频标签
+    const soundPress = document.getElementById('soundPress');
+    const soundRelease = document.getElementById('soundRelease');
 
     function animateBalance(start, end, duration) {
         let startTimestamp = null;
@@ -154,7 +162,6 @@
         window.requestAnimationFrame(step);
     }
 
-    // 日期转换辅助函数
     function parseDateToTimestamp(dateStr) {
         const match = dateStr.match(/(?:(\d+)年)?(\d+)月(\d+)日/);
         if (match) {
@@ -175,7 +182,6 @@
             return;
         }
 
-        // 1. 寻找锚点记录
         let lastBalanceIndex = -1;
         for (let i = data.length - 1; i >= 0; i--) {
             if (data[i].balance !== undefined && data[i].balance !== null && data[i].balance !== '') {
@@ -192,14 +198,12 @@
             baseTimestamp = parseDateToTimestamp(data[lastBalanceIndex].date);
         }
 
-        // 2. 计算营业额增加
         let additionalRevenue = 0;
         const startIndex = lastBalanceIndex >= 0 ? lastBalanceIndex + 1 : 0;
         for (let i = startIndex; i < data.length; i++) {
             additionalRevenue += Number(data[i].revenue || 0);
         }
 
-        // 3. 计算支出扣减
         let additionalExpense = 0;
         if (expenses && expenses.length > 0) {
             expenses.forEach(exp => {
@@ -212,7 +216,6 @@
 
         const currentRealBalance = baseBalance + additionalRevenue - additionalExpense;
         
-        // 4. 特效判断与滚动
         const lastRealBalStr = localStorage.getItem('last_real_balance');
         const lastExpenseFingerprint = localStorage.getItem('last_expense_fingerprint');
         
@@ -224,18 +227,13 @@
             latestMemo = latestExp.memo;
         }
 
-        // 【核心修改】：只要刷新，默认就从0开始滚动！
         let startNum = 0; 
-        let hasChanged = false;
 
         if (lastRealBalStr !== null) {
             const lastRealBal = Number(lastRealBalStr);
-            
+            startNum = lastRealBal;
+
             if (currentRealBalance > lastRealBal) {
-                // 余额增加了，从旧数字滚到新数字，并触发回血
-                startNum = lastRealBal;
-                hasChanged = true;
-                
                 const healAmount = currentRealBalance - lastRealBal;
                 const healDiv = document.createElement('div');
                 healDiv.className = 'heal-float';
@@ -245,10 +243,6 @@
                 setTimeout(() => healDiv.remove(), 2000);
                 
             } else if (currentRealBalance < lastRealBal) {
-                // 余额减少了，从旧数字滚到新数字，并触发暴击
-                startNum = lastRealBal;
-                hasChanged = true;
-
                 balanceCard.classList.add('shake');
                 setTimeout(() => balanceCard.classList.remove('shake'), 600);
                 balanceTitle.classList.add('crit-text');
@@ -264,11 +258,8 @@
             }
         }
 
-        // 如果余额没有变化（hasChanged === false），startNum 依然是 0！
-        // 这样无论刷新多少次，只要数据没变，都会从 0 滚动到最终值。
         animateBalance(startNum, currentRealBalance, 1500);
 
-        // 更新本地记忆
         localStorage.setItem('last_real_balance', currentRealBalance);
         if (currentFingerprint !== "") {
             localStorage.setItem('last_expense_fingerprint', currentFingerprint);
@@ -296,7 +287,43 @@
         "生意兴隆，财源广进！"
     ];
 
-    mascot.addEventListener('click', function(e) {
+    // 辅助函数：重置并播放音频（确保连续点击都有声音）
+    function playAudio(audio) {
+        if (!audio) return;
+        audio.currentTime = 0;
+        let playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                // 忽略浏览器自动播放限制导致的错误
+                console.log("音频播放被阻止，需用户交互:", error);
+            });
+        }
+    }
+
+    // 1. 按下时（手机 touchstart / 电脑 mousedown）
+    mascot.addEventListener('touchstart', function(e) {
+        playAudio(soundPress);
+    }, { passive: true });
+
+    mascot.addEventListener('mousedown', function(e) {
+        playAudio(soundPress);
+    });
+
+    // 2. 松开时（手机 touchend / 电脑 mouseup）
+    mascot.addEventListener('touchend', function(e) {
+        playAudio(soundRelease);
+        // 防止触发两次 click 事件
+        e.preventDefault(); 
+        executeMascotClick();
+    });
+
+    mascot.addEventListener('mouseup', function(e) {
+        playAudio(soundRelease);
+        executeMascotClick();
+    });
+
+    // 把原来的点击逻辑提取成一个函数
+    function executeMascotClick() {
         if (currentBalance > 0) {
             currentBalance -= 1;
             balanceText.innerText = '$' + currentBalance.toLocaleString();
@@ -318,7 +345,7 @@
         bubble.classList.add('show');
         clearTimeout(bubbleTimeout);
         bubbleTimeout = setTimeout(() => { bubble.classList.remove('show'); }, 3000);
-    });
+    }
 </script>
 
 </body>
