@@ -8,111 +8,48 @@
         * { box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
         
-        /* 顶部余额卡片 */
         .top-balance { background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 10px; margin-bottom: 30px; position: relative; transition: background 0.5s; }
         .top-balance p { margin: 0; font-size: 14px; opacity: 0.9; letter-spacing: 1px; transition: color 0.3s; }
         .top-balance p.crit-text { color: #ff3b30; font-weight: bold; opacity: 1; }
-        
         .top-balance h2 { margin: 10px 0 0 0; font-size: clamp(28px, 8vw, 48px); font-weight: bold; white-space: nowrap; display: inline-block; transition: transform 0.1s ease; }
         .top-balance h2.pop { transform: scale(1.15); color: #ffeb3b; }
 
-        /* 震动动画 */
-        @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-3px, -2px) rotate(-1deg); }
-            20% { transform: translate(-5px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
-        }
+        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-3px, -2px) rotate(-1deg); } 20% { transform: translate(-5px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
         .shake { animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) both; }
 
         .menu-container { width: 100%; max-width: 600px; text-align: center; }
         h1 { font-size: 22px; margin-bottom: 25px; color: #1d1d1f; }
-        
-        /* 按钮列表 */
         .menu-grid { display: flex; gap: 15px; justify-content: center; flex-direction: column; }
         .menu-card { background: white; width: 100%; padding: 20px; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-decoration: none; color: #1d1d1f; box-shadow: 0 8px 20px rgba(0,0,0,0.04); transition: all 0.2s ease; border: 2px solid transparent; }
         .menu-card:active { transform: scale(0.98); background: #fafafa; }
         .icon { font-size: 35px; margin-bottom: 8px; }
         .title { font-size: 18px; font-weight: 600; }
         .subtitle { font-size: 13px; color: #86868b; margin-top: 5px; }
-
         .tips-text { color: #a1a1a6; font-size: 13px; margin-top: 30px; letter-spacing: 1px; }
 
-        /* ================= 悬浮窗橘子与气泡 ================= */
         .floating-mascot-container { position: fixed; bottom: 30px; right: 20px; z-index: 9999; }
-        
-        .mascot { 
-            font-size: 65px; 
-            cursor: pointer; 
-            user-select: none; 
-            transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1); 
-            display: inline-block; 
-            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.25)); 
-            touch-action: manipulation; /* 解决手机端点击延迟 */
-            -webkit-tap-highlight-color: transparent; /* 去除手机点击蓝色高亮 */
-        }
-        
-        /* 用 CSS 类来控制按压，比 :active 在手机上更稳定 */
-        .mascot.pressing {
-            transform: scale(1.3, 0.6) translateY(15px); 
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); 
-        }
+        .mascot { font-size: 65px; cursor: pointer; user-select: none; transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1); display: inline-block; filter: drop-shadow(0 8px 12px rgba(0,0,0,0.25)); touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        .mascot.pressing { transform: scale(1.3, 0.6) translateY(15px); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
 
-        /* 动漫气泡对话框 */
-        .speech-bubble {
-            position: absolute; bottom: 85px; right: 10px; background-color: #ffffff; color: #1d1d1f; padding: 12px 18px; border-radius: 16px; border: 2px solid #1d1d1f; font-size: 15px; font-weight: 600; white-space: nowrap; box-shadow: 0 4px 15px rgba(0,0,0,0.1); opacity: 0; transform: translateY(10px) scale(0.8); transform-origin: bottom right; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; z-index: 10000;
-        }
+        .speech-bubble { position: absolute; bottom: 85px; right: 10px; background-color: #ffffff; color: #1d1d1f; padding: 12px 18px; border-radius: 16px; border: 2px solid #1d1d1f; font-size: 15px; font-weight: 600; white-space: nowrap; box-shadow: 0 4px 15px rgba(0,0,0,0.1); opacity: 0; transform: translateY(10px) scale(0.8); transform-origin: bottom right; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; z-index: 10000; }
         .speech-bubble.show { opacity: 1; transform: translateY(0) scale(1); }
         .speech-bubble::after { content: ''; position: absolute; bottom: -10px; right: 25px; border-width: 10px 10px 0; border-style: solid; border-color: #1d1d1f transparent transparent transparent; }
         .speech-bubble::before { content: ''; position: absolute; bottom: -7px; right: 27px; border-width: 8px 8px 0; border-style: solid; border-color: #ffffff transparent transparent transparent; z-index: 1; }
 
-        /* 暴击飘字特效 (红) */
-        .crit-float {
-            position: fixed; color: #ff3b30; font-weight: 900; font-size: 28px;
-            text-shadow: 2px 2px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff;
-            pointer-events: none; animation: critUp 2s ease-out forwards; z-index: 10000;
-            text-align: center; width: 100%; left: 0; top: 100px;
-        }
+        .crit-float { position: fixed; color: #ff3b30; font-weight: 900; font-size: 28px; text-shadow: 2px 2px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff; pointer-events: none; animation: critUp 2s ease-out forwards; z-index: 10000; text-align: center; width: 100%; left: 0; top: 100px; }
         .crit-float span { display: block; font-size: 14px; color: #333; margin-top: 5px; text-shadow: none; font-weight: bold; }
-
-        /* 回血飘字特效 (绿) */
-        .heal-float {
-            position: fixed; color: #34c759; font-weight: 900; font-size: 28px;
-            text-shadow: 2px 2px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff;
-            pointer-events: none; animation: critUp 2s ease-out forwards; z-index: 10000;
-            text-align: center; width: 100%; left: 0; top: 100px;
-        }
+        .heal-float { position: fixed; color: #34c759; font-weight: 900; font-size: 28px; text-shadow: 2px 2px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff; pointer-events: none; animation: critUp 2s ease-out forwards; z-index: 10000; text-align: center; width: 100%; left: 0; top: 100px; }
         .heal-float span { display: block; font-size: 14px; color: #333; margin-top: 5px; text-shadow: none; font-weight: bold; }
 
-        @keyframes critUp {
-            0% { opacity: 0; transform: translateY(20px) scale(0.5); }
-            20% { opacity: 1; transform: translateY(0) scale(1.2); }
-            40% { transform: translateY(-10px) scale(1); }
-            80% { opacity: 1; transform: translateY(-40px) scale(1); }
-            100% { opacity: 0; transform: translateY(-80px) scale(0.8); }
-        }
+        @keyframes critUp { 0% { opacity: 0; transform: translateY(20px) scale(0.5); } 20% { opacity: 1; transform: translateY(0) scale(1.2); } 40% { transform: translateY(-10px) scale(1); } 80% { opacity: 1; transform: translateY(-40px) scale(1); } 100% { opacity: 0; transform: translateY(-80px) scale(0.8); } }
 
         .minus-one { position: fixed; color: #ff3b30; font-weight: bold; font-size: 20px; pointer-events: none; animation: floatUp 0.8s ease-out forwards; z-index: 10000; }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-50px) scale(1.5); } }
 
-        @media (min-width: 500px) {
-            .menu-grid { flex-direction: row; flex-wrap: wrap; }
-            .menu-card { width: calc(33.33% - 10px); height: 160px; } 
-            .floating-mascot-container { bottom: 50px; right: 50px; }
-        }
+        @media (min-width: 500px) { .menu-grid { flex-direction: row; flex-wrap: wrap; } .menu-card { width: calc(33.33% - 10px); height: 160px; } .floating-mascot-container { bottom: 50px; right: 50px; } }
     </style>
 </head>
 <body>
-
-<audio id="soundPress" src="Ya1.mp3" preload="auto"></audio>
-<audio id="soundRelease" src="Ya2.mp3" preload="auto"></audio>
 
 <div class="top-balance" id="balance-card">
     <p id="balance-title">最新账户可用余额</p>
@@ -121,25 +58,11 @@
 
 <div class="menu-container">
     <h1>旧店（Bazar deseo）</h1>
-    
     <div class="menu-grid">
-        <a href="data.html" class="menu-card">
-            <div class="icon">📈</div>
-            <div class="title">昨日营业额</div>
-            <div class="subtitle">看数据 & 图表</div>
-        </a>
-        <a href="history.html" class="menu-card">
-            <div class="icon">📅</div>
-            <div class="title">历史汇总</div>
-            <div class="subtitle">查账本 & 极值</div>
-        </a>
-        <a href="expenses.html" class="menu-card">
-            <div class="icon">💸</div>
-            <div class="title">扣款明细</div>
-            <div class="subtitle">日常支出流水</div>
-        </a>
+        <a href="data.html" class="menu-card"><div class="icon">📈</div><div class="title">昨日营业额</div><div class="subtitle">看数据 & 图表</div></a>
+        <a href="history.html" class="menu-card"><div class="icon">📅</div><div class="title">历史汇总</div><div class="subtitle">查账本 & 极值</div></a>
+        <a href="expenses.html" class="menu-card"><div class="icon">💸</div><div class="title">扣款明细</div><div class="subtitle">日常支出流水</div></a>
     </div>
-
     <p class="tips-text">Tips：更多功能，敬请期待（催我找人弄你）</p>
 </div>
 
@@ -153,9 +76,51 @@
     const balanceText = document.getElementById('home-balance');
     const balanceCard = document.getElementById('balance-card');
     const balanceTitle = document.getElementById('balance-title');
-    
-    const soundPress = document.getElementById('soundPress');
-    const soundRelease = document.getElementById('soundRelease');
+
+    // ================= 游戏级音频加载机制 (Web Audio API) =================
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+    let audioBufferPress = null;
+    let audioBufferRelease = null;
+
+    // 下载并解码音频到内存
+    async function loadAudioBuffers() {
+        try {
+            const resPress = await fetch('Ya1.mp3');
+            const arrayPress = await resPress.arrayBuffer();
+            audioBufferPress = await audioCtx.decodeAudioData(arrayPress);
+
+            const resRelease = await fetch('Ya2.mp3');
+            const arrayRelease = await resRelease.arrayBuffer();
+            audioBufferRelease = await audioCtx.decodeAudioData(arrayRelease);
+            console.log("音频已成功缓存至内存，零延迟准备就绪");
+        } catch (e) {
+            console.log("音频加载失败，请检查文件名或跨域限制", e);
+        }
+    }
+    loadAudioBuffers();
+
+    // 瞬间播放函数
+    function playSound(buffer) {
+        if (!buffer) return;
+        // 手机浏览器要求必须处于 running 状态
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioCtx.destination);
+        source.start(0);
+    }
+
+    // 解锁音频（必须在用户第一次点击屏幕时唤醒）
+    window.addEventListener('pointerdown', function unlockAudio() {
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        window.removeEventListener('pointerdown', unlockAudio);
+    }, { once: true });
+    // ======================================================================
 
     function animateBalance(start, end, duration) {
         let startTimestamp = null;
@@ -300,46 +265,35 @@
         "生意兴隆，财源广进！"
     ];
 
-    function playAudio(audio) {
-        if (!audio) return;
-        audio.currentTime = 0;
-        let playPromise = audio.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(error => { console.log("音频播放被阻止:", error); });
-        }
-    }
-
-    // 1. 按下时：播放Ya1，加上按压样式
     function handlePress(e) {
         mascot.classList.add('pressing');
-        playAudio(soundPress);
+        playSound(audioBufferPress);
     }
 
-    // 2. 抬起/取消时：播放Ya2，去掉按压样式
     function handleRelease(e) {
         mascot.classList.remove('pressing');
-        playAudio(soundRelease);
+        playSound(audioBufferRelease);
     }
 
-    // 绑定手机触摸事件
     mascot.addEventListener('touchstart', handlePress, { passive: true });
-    mascot.addEventListener('touchend', handleRelease);
-    mascot.addEventListener('touchcancel', handleRelease);
+    mascot.addEventListener('touchend', function(e) {
+        handleRelease(e);
+        e.preventDefault(); 
+        executeMascotClick();
+    });
+    mascot.addEventListener('touchcancel', function(e) {
+        mascot.classList.remove('pressing');
+    });
 
-    // 绑定电脑鼠标事件
     mascot.addEventListener('mousedown', handlePress);
-    mascot.addEventListener('mouseup', handleRelease);
-    // 防止鼠标拖拽出去后不触发 mouseup
+    mascot.addEventListener('mouseup', function(e) {
+        handleRelease(e);
+        executeMascotClick();
+    });
     mascot.addEventListener('mouseleave', function() {
         mascot.classList.remove('pressing');
     });
 
-    // 3. 核心动画逻辑（用 click 事件兜底，手机端无论点多快，只要抬手一定会触发）
-    mascot.addEventListener('click', function(e) {
-        executeMascotClick();
-    });
-
-    // 把原来的点击逻辑提取成一个函数
     function executeMascotClick() {
         if (currentBalance > 0) {
             currentBalance -= 1;
