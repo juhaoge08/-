@@ -70,7 +70,7 @@
 
         @media (min-width: 500px) {
             .menu-grid { flex-direction: row; flex-wrap: wrap; }
-            .menu-card { width: calc(33.33% - 10px); height: 160px; } /* 电脑端三个并排 */
+            .menu-card { width: calc(33.33% - 10px); height: 160px; } 
             .floating-mascot-container { bottom: 50px; right: 50px; }
         }
     </style>
@@ -96,7 +96,6 @@
             <div class="title">历史汇总</div>
             <div class="subtitle">查账本 & 极值</div>
         </a>
-        <!-- 新增的扣款明细按钮 -->
         <a href="expenses.html" class="menu-card">
             <div class="icon">💸</div>
             <div class="title">扣款明细</div>
@@ -104,11 +103,11 @@
         </a>
     </div>
 
-    <p class="tips-text">Tips：更多功能，敬请期待（催我找人弄你）</p>
+    <p class="tips-text">Tips：更多功能，敬请期待...</p>
 </div>
 
 <div class="floating-mascot-container">
-    <div class="mascot" id="magic-mascot">🍊</div>         <!-- 橘子在这 -->
+    <div class="mascot" id="magic-mascot">🍊</div>
 </div>
 
 <script>
@@ -117,6 +116,7 @@
     const balanceCard = document.getElementById('balance-card');
     const balanceTitle = document.getElementById('balance-title');
 
+    // 滚动数字动画函数
     function animateBalance(start, end, duration) {
         let startTimestamp = null;
         const step = (timestamp) => {
@@ -135,7 +135,6 @@
         window.requestAnimationFrame(step);
     }
 
-    // 读取数据
     Promise.all([
         fetch('data.json').then(res => res.json()).catch(() => []),
         fetch('expenses.json').then(res => res.json()).catch(() => [])
@@ -154,8 +153,6 @@
         }
 
         const realBalance = baseBalance - totalExpense;
-
-        // 侦测新扣款暴击
         const lastExpenseIdStr = localStorage.getItem('last_expense_id');
         
         if (expenses && expenses.length > 0) {
@@ -166,6 +163,7 @@
                 const lastId = Number(lastExpenseIdStr);
                 
                 if (latestId > lastId) {
+                    // 【触发暴击特效】
                     balanceCard.classList.add('shake');
                     setTimeout(() => balanceCard.classList.remove('shake'), 600);
                     balanceTitle.classList.add('crit-text');
@@ -180,14 +178,17 @@
                     const balanceBeforeThisExpense = realBalance + Number(latestExpense.amount);
                     animateBalance(balanceBeforeThisExpense, realBalance, 1500);
                 } else {
-                    balanceText.innerText = '$' + realBalance.toLocaleString();
+                    // 【普通打开：从0滚动到当前余额】
+                    animateBalance(0, realBalance, 1500);
                 }
             } else {
-                balanceText.innerText = '$' + realBalance.toLocaleString();
+                // 【第一次打开：从0滚动到当前余额】
+                animateBalance(0, realBalance, 1500);
             }
             localStorage.setItem('last_expense_id', latestId);
         } else {
-            balanceText.innerText = '$' + realBalance.toLocaleString();
+            // 如果没扣款，也从0滚动到当前余额
+            animateBalance(0, realBalance, 1500);
         }
 
         currentBalance = realBalance; 
@@ -196,7 +197,6 @@
         balanceText.innerText = '读取失败';
     });
 
-    // 橘子交互
     const mascot = document.getElementById('magic-mascot');
     mascot.addEventListener('click', function(e) {
         if (currentBalance > 0) {
