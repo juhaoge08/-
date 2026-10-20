@@ -13,7 +13,6 @@
         .top-balance p { margin: 0; font-size: 14px; opacity: 0.9; letter-spacing: 1px; transition: color 0.3s; }
         .top-balance p.crit-text { color: #ff3b30; font-weight: bold; opacity: 1; }
         
-        /* 余额数字 */
         .top-balance h2 { margin: 10px 0 0 0; font-size: clamp(28px, 8vw, 48px); font-weight: bold; white-space: nowrap; display: inline-block; transition: transform 0.1s ease; }
         .top-balance h2.pop { transform: scale(1.15); color: #ffeb3b; }
 
@@ -46,10 +45,70 @@
 
         .tips-text { color: #a1a1a6; font-size: 13px; margin-top: 30px; letter-spacing: 1px; }
 
-        /* ================= 悬浮窗橘子 ================= */
+        /* ================= 悬浮窗橘子与气泡 ================= */
         .floating-mascot-container { position: fixed; bottom: 30px; right: 20px; z-index: 9999; }
-        .mascot { font-size: 65px; cursor: pointer; user-select: none; transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1); display: inline-block; filter: drop-shadow(0 8px 12px rgba(0,0,0,0.25)); }
-        .mascot:active { transform: scale(1.3, 0.6) translateY(15px); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+        
+        .mascot { 
+            font-size: 65px; 
+            cursor: pointer; 
+            user-select: none; 
+            transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1); 
+            display: inline-block; 
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.25)); 
+        }
+        .mascot:active { 
+            transform: scale(1.3, 0.6) translateY(15px); 
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); 
+        }
+
+        /* 动漫气泡对话框 */
+        .speech-bubble {
+            position: absolute;
+            bottom: 85px; /* 在橘子上方 */
+            right: 10px;
+            background-color: #ffffff;
+            color: #1d1d1f;
+            padding: 12px 18px;
+            border-radius: 16px;
+            border: 2px solid #1d1d1f; /* 漫画风格的黑边 */
+            font-size: 15px;
+            font-weight: 600;
+            white-space: nowrap;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            opacity: 0;
+            transform: translateY(10px) scale(0.8);
+            transform-origin: bottom right; /* 从右下角弹出 */
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none; /* 不阻挡点击 */
+            z-index: 10000;
+        }
+        
+        /* 气泡出现时的状态 */
+        .speech-bubble.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* 气泡的小尾巴（指向橘子） */
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            right: 25px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: #1d1d1f transparent transparent transparent;
+        }
+        .speech-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -7px;
+            right: 27px;
+            border-width: 8px 8px 0;
+            border-style: solid;
+            border-color: #ffffff transparent transparent transparent;
+            z-index: 1;
+        }
 
         /* 暴击飘字特效 */
         .crit-float {
@@ -70,33 +129,6 @@
 
         .minus-one { position: fixed; color: #ff3b30; font-weight: bold; font-size: 20px; pointer-events: none; animation: floatUp 0.8s ease-out forwards; z-index: 10000; }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-50px) scale(1.5); } }
-
-        /* ================= 自定义弹窗样式 ================= */
-        .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
-            z-index: 10002; justify-content: center; align-items: center;
-            opacity: 0; transition: opacity 0.3s ease;
-        }
-        .modal-overlay.show { display: flex; opacity: 1; }
-        
-        .modal-box {
-            background: white; width: 85%; max-width: 350px; border-radius: 24px;
-            padding: 25px 20px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            transform: translateY(30px) scale(0.9); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .modal-overlay.show .modal-box { transform: translateY(0) scale(1); }
-
-        .modal-icon { font-size: 45px; margin-bottom: 15px; }
-        .modal-title { font-size: 20px; font-weight: 700; margin: 0 0 10px 0; color: #1d1d1f; }
-        .modal-content { font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 25px; white-space: pre-wrap; }
-        
-        .modal-btn {
-            background: #007aff; color: white; border: none; padding: 12px 0; width: 100%;
-            border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer;
-            transition: background 0.2s;
-        }
-        .modal-btn:active { background: #005bb5; transform: scale(0.98); }
 
         @media (min-width: 500px) {
             .menu-grid { flex-direction: row; flex-wrap: wrap; }
@@ -137,22 +169,11 @@
 </div>
 
 <div class="floating-mascot-container">
+    <!-- 动漫气泡对话框 -->
+    <div class="speech-bubble" id="speechBubble">今天辛苦啦！</div>
+    <!-- 橘子本体 -->
     <div class="mascot" id="magic-mascot">🍊</div>
 </div>
-
-<!-- ================= 弹窗 HTML 结构 ================= -->
-<div class="modal-overlay" id="customModal">
-    <div class="modal-box">
-        <div class="modal-icon">🍊</div>
-        <!-- ✏️【修改这里】：修改弹窗的标题 -->
-        <h2 class="modal-title">橘耗鸽大王留言</h2>
-        <!-- ✏️【修改这里】：修改弹窗的内容（可以多写几行，会自动换行） -->
-        <div class="modal-content">今天辛苦啦！记得核对好账单再下班哦～ 祝你明天生意兴隆！</div>
-        
-        <button class="modal-btn" onclick="closeModal()">收到！</button>
-    </div>
-</div>
-<!-- ================================================= -->
 
 <script>
     let currentBalance = 0; 
@@ -207,7 +228,6 @@
                 const lastId = Number(lastExpenseIdStr);
                 
                 if (latestId > lastId) {
-                    // 暴击特效
                     balanceCard.classList.add('shake');
                     setTimeout(() => balanceCard.classList.remove('shake'), 600);
                     balanceTitle.classList.add('crit-text');
@@ -238,23 +258,22 @@
         balanceText.innerText = '读取失败';
     });
 
-    // ================= 弹窗逻辑 =================
-    const modal = document.getElementById('customModal');
 
-    function closeModal() {
-        modal.classList.remove('show');
-    }
-
-    // 点击背景遮罩也能关闭弹窗
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            closeModal();
-        }
-    });
-    // ===============================================
-
-    // 橘子点击交互
+    // ================= 橘子与气泡的交互逻辑 =================
     const mascot = document.getElementById('magic-mascot');
+    const bubble = document.getElementById('speechBubble');
+    let bubbleTimeout;
+
+    // ✏️【修改这里】：你想要橘子说什么，都在下面这个列表里改，可以无限加
+    const orangeQuotes = [
+        "今天辛苦啦！记得对账哦～",
+        "不许偷懒，好好看店！",
+        "今天赚大钱了吗？",
+        "花了我一块钱，心疼...",
+        "要不要来杯下午茶？",
+        "生意兴隆，财源广进！"
+    ];
+
     mascot.addEventListener('click', function(e) {
         // 1. 减钱与动画反馈
         if (currentBalance > 0) {
@@ -275,8 +294,21 @@
         document.body.appendChild(minusOne);
         setTimeout(() => { minusOne.remove(); }, 800);
 
-        // 3. 弹出自定义对话框
-        modal.classList.add('show');
+        // 3. 弹出动漫气泡
+        // 随机挑一句话
+        const randomQuote = orangeQuotes[Math.floor(Math.random() * orangeQuotes.length)];
+        bubble.innerText = randomQuote;
+        
+        // 显示气泡
+        bubble.classList.add('show');
+
+        // 如果连续点击，重置消失的倒计时
+        clearTimeout(bubbleTimeout);
+
+        // 3秒后气泡自动消失
+        bubbleTimeout = setTimeout(() => {
+            bubble.classList.remove('show');
+        }, 3000);
     });
 </script>
 
