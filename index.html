@@ -154,7 +154,7 @@
         window.requestAnimationFrame(step);
     }
 
-    // 日期转换辅助函数，支持 2026年10月20日 和 10月20日 两种格式
+    // 日期转换辅助函数
     function parseDateToTimestamp(dateStr) {
         const match = dateStr.match(/(?:(\d+)年)?(\d+)月(\d+)日/);
         if (match) {
@@ -175,7 +175,7 @@
             return;
         }
 
-        // 1. 寻找最后一条有 balance 的锚点记录
+        // 1. 寻找锚点记录
         let lastBalanceIndex = -1;
         for (let i = data.length - 1; i >= 0; i--) {
             if (data[i].balance !== undefined && data[i].balance !== null && data[i].balance !== '') {
@@ -192,14 +192,14 @@
             baseTimestamp = parseDateToTimestamp(data[lastBalanceIndex].date);
         }
 
-        // 2. 计算锚点之后的营业额增加
+        // 2. 计算营业额增加
         let additionalRevenue = 0;
         const startIndex = lastBalanceIndex >= 0 ? lastBalanceIndex + 1 : 0;
         for (let i = startIndex; i < data.length; i++) {
             additionalRevenue += Number(data[i].revenue || 0);
         }
 
-        // 3. 计算锚点之后的支出扣减
+        // 3. 计算支出扣减
         let additionalExpense = 0;
         if (expenses && expenses.length > 0) {
             expenses.forEach(exp => {
@@ -224,15 +224,18 @@
             latestMemo = latestExp.memo;
         }
 
-        // 默认从哪里开始滚（没有历史记录就从 0 开始）
+        // 【核心修改】：只要刷新，默认就从0开始滚动！
         let startNum = 0; 
+        let hasChanged = false;
 
         if (lastRealBalStr !== null) {
             const lastRealBal = Number(lastRealBalStr);
-            startNum = lastRealBal; // 如果有历史记录，就从历史记录开始滚
-
+            
             if (currentRealBalance > lastRealBal) {
-                // 回血特效
+                // 余额增加了，从旧数字滚到新数字，并触发回血
+                startNum = lastRealBal;
+                hasChanged = true;
+                
                 const healAmount = currentRealBalance - lastRealBal;
                 const healDiv = document.createElement('div');
                 healDiv.className = 'heal-float';
@@ -242,7 +245,10 @@
                 setTimeout(() => healDiv.remove(), 2000);
                 
             } else if (currentRealBalance < lastRealBal) {
-                // 暴击特效
+                // 余额减少了，从旧数字滚到新数字，并触发暴击
+                startNum = lastRealBal;
+                hasChanged = true;
+
                 balanceCard.classList.add('shake');
                 setTimeout(() => balanceCard.classList.remove('shake'), 600);
                 balanceTitle.classList.add('crit-text');
@@ -258,7 +264,8 @@
             }
         }
 
-        // 无论有没有特效，最后统一执行滚动动画！
+        // 如果余额没有变化（hasChanged === false），startNum 依然是 0！
+        // 这样无论刷新多少次，只要数据没变，都会从 0 滚动到最终值。
         animateBalance(startNum, currentRealBalance, 1500);
 
         // 更新本地记忆
