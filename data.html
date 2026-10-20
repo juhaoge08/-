@@ -20,29 +20,25 @@
 
         .data-content { display: none; } 
         
-        /* 数字卡片 */
         .cards { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
         .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); text-align: center; }
         .card p { margin: 0; color: #86868b; font-size: 13px; }
         .number { font-size: clamp(28px, 8vw, 42px); font-weight: 700; color: #1d1d1f; margin-top: 10px; white-space: nowrap; }
         .number.blue { color: #007aff; }
 
-        /* 切换按钮 */
         .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; justify-content: center; }
         .tab-btn { background: white; border: 1px solid #d2d2d7; color: #1d1d1f; padding: 8px 14px; border-radius: 20px; cursor: pointer; font-size: 13px; transition: 0.2s; }
         .tab-btn.active { background: #007aff; color: white; border-color: #007aff; box-shadow: 0 4px 10px rgba(0,122,255,0.2); }
 
-        /* 自由对比面板 */
         .custom-compare { display: none; flex-direction: column; gap: 10px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .custom-compare select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; outline: none; background: #f5f5f7; }
         .compare-btn { background: #34c759; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; }
 
-        /* 图表与统计区 */
         .chart-container { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 300px; margin-bottom: 10px; }
         
-        /* 新增的统计文字样式 */
-        .stats-info { text-align: center; font-size: 14px; color: #1d1d1f; font-weight: 500; min-height: 20px; padding: 5px 0; }
-        .stats-info span { color: #007aff; font-weight: bold; }
+        /* ================= 调大了统计文字的字号 ================= */
+        .stats-info { text-align: center; font-size: 16px; color: #1d1d1f; font-weight: 500; min-height: 20px; padding: 10px 0; line-height: 1.6; }
+        .stats-info span { color: #007aff; font-weight: 700; font-size: 18px; }
         
         @media (min-width: 500px) {
             .cards { flex-direction: row; }
@@ -96,7 +92,6 @@
             <canvas id="myChart"></canvas>
         </div>
         
-        <!-- 新增的统计文字展示区 -->
         <div class="stats-info" id="stats-display"></div>
     </div>
 </div>
@@ -193,7 +188,7 @@
         let chartData = [];
         if (type === 'yesterday') {
             chartData = [globalData[globalData.length - 1]];
-            statsDisplay.innerHTML = ''; // 只看昨日不显示统计
+            statsDisplay.innerHTML = ''; 
         } else if (type === '7days') {
             chartData = globalData.slice(-7);
             updateStats(chartData, '近7日');
@@ -205,7 +200,6 @@
         updateChartData(chartData);
     }
 
-    // 计算并渲染统计文字
     function updateStats(dataArray, prefix) {
         if (!dataArray || dataArray.length === 0) {
             statsDisplay.innerHTML = '';
@@ -217,14 +211,14 @@
         });
         const avg = Math.round(total / dataArray.length);
         
-        statsDisplay.innerHTML = `${prefix}总营业额: <span>$${total.toLocaleString()}</span> &nbsp;|&nbsp; ${prefix}平均日营业额: <span>$${avg.toLocaleString()}</span>`;
+        statsDisplay.innerHTML = `${prefix}总营业额: <span>$${total.toLocaleString()}</span><br>${prefix}平均日营业额: <span>$${avg.toLocaleString()}</span>`;
     }
 
     function toggleCustomCompare(btnElement) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         btnElement.classList.add('active');
         document.getElementById('custom-compare-panel').style.display = 'flex';
-        statsDisplay.innerHTML = ''; // 自由选择清空统计
+        statsDisplay.innerHTML = '';
     }
 
     function doCustomCompare() {
@@ -238,7 +232,7 @@
         if(data2 && date1 !== date2) compareData.push(data2); 
         compareData.sort((a, b) => new Date(a.date) - new Date(b.date));
         
-        statsDisplay.innerHTML = ''; // 自由选择清空统计
+        statsDisplay.innerHTML = ''; 
         updateChartData(compareData);
     }
 
