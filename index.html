@@ -47,8 +47,23 @@
 
         /* ================= 悬浮窗橘子与气泡 ================= */
         .floating-mascot-container { position: fixed; bottom: 30px; right: 20px; z-index: 9999; }
-        .mascot { font-size: 65px; cursor: pointer; user-select: none; transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1); display: inline-block; filter: drop-shadow(0 8px 12px rgba(0,0,0,0.25)); }
-        .mascot:active { transform: scale(1.3, 0.6) translateY(15px); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+        
+        .mascot { 
+            font-size: 65px; 
+            cursor: pointer; 
+            user-select: none; 
+            transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1); 
+            display: inline-block; 
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.25)); 
+            touch-action: manipulation; /* 解决手机端点击延迟 */
+            -webkit-tap-highlight-color: transparent; /* 去除手机点击蓝色高亮 */
+        }
+        
+        /* 用 CSS 类来控制按压，比 :active 在手机上更稳定 */
+        .mascot.pressing {
+            transform: scale(1.3, 0.6) translateY(15px); 
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); 
+        }
 
         /* 动漫气泡对话框 */
         .speech-bubble {
@@ -96,9 +111,8 @@
 </head>
 <body>
 
-<!-- 音频文件：请确保你上传的文件名和下面的一致 -->
-<audio id="soundPress" src="ya1.mp3" preload="auto"></audio>
-<audio id="soundRelease" src="ya2.mp3" preload="auto"></audio>
+<audio id="soundPress" src="Ya1.mp3" preload="auto"></audio>
+<audio id="soundRelease" src="Ya2.mp3" preload="auto"></audio>
 
 <div class="top-balance" id="balance-card">
     <p id="balance-title">最新账户可用余额</p>
@@ -140,7 +154,6 @@
     const balanceCard = document.getElementById('balance-card');
     const balanceTitle = document.getElementById('balance-title');
     
-    // 获取音频标签
     const soundPress = document.getElementById('soundPress');
     const soundRelease = document.getElementById('soundRelease');
 
@@ -287,38 +300,42 @@
         "生意兴隆，财源广进！"
     ];
 
-    // 辅助函数：重置并播放音频（确保连续点击都有声音）
     function playAudio(audio) {
         if (!audio) return;
         audio.currentTime = 0;
         let playPromise = audio.play();
         if (playPromise !== undefined) {
-            playPromise.catch(error => {
-                // 忽略浏览器自动播放限制导致的错误
-                console.log("音频播放被阻止，需用户交互:", error);
-            });
+            playPromise.catch(error => { console.log("音频播放被阻止:", error); });
         }
     }
 
-    // 1. 按下时（手机 touchstart / 电脑 mousedown）
-    mascot.addEventListener('touchstart', function(e) {
+    // 1. 按下时：播放Ya1，加上按压样式
+    function handlePress(e) {
+        mascot.classList.add('pressing');
         playAudio(soundPress);
-    }, { passive: true });
+    }
 
-    mascot.addEventListener('mousedown', function(e) {
-        playAudio(soundPress);
+    // 2. 抬起/取消时：播放Ya2，去掉按压样式
+    function handleRelease(e) {
+        mascot.classList.remove('pressing');
+        playAudio(soundRelease);
+    }
+
+    // 绑定手机触摸事件
+    mascot.addEventListener('touchstart', handlePress, { passive: true });
+    mascot.addEventListener('touchend', handleRelease);
+    mascot.addEventListener('touchcancel', handleRelease);
+
+    // 绑定电脑鼠标事件
+    mascot.addEventListener('mousedown', handlePress);
+    mascot.addEventListener('mouseup', handleRelease);
+    // 防止鼠标拖拽出去后不触发 mouseup
+    mascot.addEventListener('mouseleave', function() {
+        mascot.classList.remove('pressing');
     });
 
-    // 2. 松开时（手机 touchend / 电脑 mouseup）
-    mascot.addEventListener('touchend', function(e) {
-        playAudio(soundRelease);
-        // 防止触发两次 click 事件
-        e.preventDefault(); 
-        executeMascotClick();
-    });
-
-    mascot.addEventListener('mouseup', function(e) {
-        playAudio(soundRelease);
+    // 3. 核心动画逻辑（用 click 事件兜底，手机端无论点多快，只要抬手一定会触发）
+    mascot.addEventListener('click', function(e) {
         executeMascotClick();
     });
 
