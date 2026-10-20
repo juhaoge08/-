@@ -173,6 +173,7 @@
         }
     }
 
+    // 滚动数字动画
     function animateBalance(start, end, duration) {
         let startTimestamp = null;
         const step = (timestamp) => {
@@ -256,13 +257,15 @@
             latestMemo = latestExp.memo;
         }
 
+        // 【核心修复】：默认起点是 0（这样刷新页面一定会从 0 开始滚）
         let startNum = 0; 
 
         if (lastRealBalStr !== null) {
             const lastRealBal = Number(lastRealBalStr);
-            startNum = lastRealBal;
 
             if (currentRealBalance > lastRealBal) {
+                // 只有余额增加了，起点才变成旧余额
+                startNum = lastRealBal;
                 const healAmount = currentRealBalance - lastRealBal;
                 const healDiv = document.createElement('div');
                 healDiv.className = 'heal-float';
@@ -272,6 +275,8 @@
                 setTimeout(() => healDiv.remove(), 2000);
                 
             } else if (currentRealBalance < lastRealBal) {
+                // 只有余额减少了，起点才变成旧余额
+                startNum = lastRealBal;
                 balanceCard.classList.add('shake');
                 setTimeout(() => balanceCard.classList.remove('shake'), 600);
                 balanceTitle.classList.add('crit-text');
@@ -287,6 +292,7 @@
             }
         }
 
+        // 统一执行滚动
         animateBalance(startNum, currentRealBalance, 1500);
 
         localStorage.setItem('last_real_balance', currentRealBalance);
