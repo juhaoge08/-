@@ -55,11 +55,11 @@
             transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1); 
             display: inline-block; 
             filter: drop-shadow(0 8px 12px rgba(0,0,0,0.25)); 
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation; /* 解决手机端点击延迟 */
+            -webkit-tap-highlight-color: transparent; /* 去除手机点击蓝色高亮 */
         }
         
-        /* JS 控制的按压样式 */
+        /* 用 CSS 类来控制按压，比 :active 在手机上更稳定 */
         .mascot.pressing {
             transform: scale(1.3, 0.6) translateY(15px); 
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); 
@@ -111,7 +111,6 @@
 </head>
 <body>
 
-<!-- 音频标签恢复，确保最稳定的兼容性 -->
 <audio id="soundPress" src="Ya1.mp3" preload="auto"></audio>
 <audio id="soundRelease" src="Ya2.mp3" preload="auto"></audio>
 
@@ -155,24 +154,8 @@
     const balanceCard = document.getElementById('balance-card');
     const balanceTitle = document.getElementById('balance-title');
     
-    const audioPress = document.getElementById('soundPress');
-    const audioRelease = document.getElementById('soundRelease');
-
-    // 静音预加载，破解手机浏览器音频延迟
-    window.addEventListener('pointerdown', function unlockAudio() {
-        audioPress.play().then(() => { audioPress.pause(); audioPress.currentTime = 0; }).catch(()=>{});
-        audioRelease.play().then(() => { audioRelease.pause(); audioRelease.currentTime = 0; }).catch(()=>{});
-        window.removeEventListener('pointerdown', unlockAudio);
-    }, { once: true });
-
-    function playSound(audio) {
-        if (!audio) return;
-        audio.currentTime = 0; 
-        let playPromise = audio.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(error => { console.log("等待用户交互"); });
-        }
-    }
+    const soundPress = document.getElementById('soundPress');
+    const soundRelease = document.getElementById('soundRelease');
 
     function animateBalance(start, end, duration) {
         let startTimestamp = null;
@@ -317,27 +300,46 @@
         "生意兴隆，财源广进！"
     ];
 
-    // 绑定 PointerEvent（同时兼容鼠标和触摸，且手机端无延迟）
-    mascot.addEventListener('pointerdown', function(e) {
+    function playAudio(audio) {
+        if (!audio) return;
+        audio.currentTime = 0;
+        let playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(error => { console.log("音频播放被阻止:", error); });
+        }
+    }
+
+    // 1. 按下时：播放Ya1，加上按压样式
+    function handlePress(e) {
         mascot.classList.add('pressing');
-        playSound(audioPress); // 播放按下音效
+        playAudio(soundPress);
+    }
+
+    // 2. 抬起/取消时：播放Ya2，去掉按压样式
+    function handleRelease(e) {
+        mascot.classList.remove('pressing');
+        playAudio(soundRelease);
+    }
+
+    // 绑定手机触摸事件
+    mascot.addEventListener('touchstart', handlePress, { passive: true });
+    mascot.addEventListener('touchend', handleRelease);
+    mascot.addEventListener('touchcancel', handleRelease);
+
+    // 绑定电脑鼠标事件
+    mascot.addEventListener('mousedown', handlePress);
+    mascot.addEventListener('mouseup', handleRelease);
+    // 防止鼠标拖拽出去后不触发 mouseup
+    mascot.addEventListener('mouseleave', function() {
+        mascot.classList.remove('pressing');
     });
 
-    mascot.addEventListener('pointerup', function(e) {
-        mascot.classList.remove('pressing');
-        playSound(audioRelease); // 播放释放音效
-        executeMascotClick();    // 触发扣钱、气泡等动画
+    // 3. 核心动画逻辑（用 click 事件兜底，手机端无论点多快，只要抬手一定会触发）
+    mascot.addEventListener('click', function(e) {
+        executeMascotClick();
     });
 
-    // 防止鼠标/手指滑出橘子区域
-    mascot.addEventListener('pointerleave', function() {
-        mascot.classList.remove('pressing');
-    });
-    mascot.addEventListener('pointercancel', function() {
-        mascot.classList.remove('pressing');
-    });
-
-    // 核心动画逻辑
+    // 把原来的点击逻辑提取成一个函数
     function executeMascotClick() {
         if (currentBalance > 0) {
             currentBalance -= 1;
