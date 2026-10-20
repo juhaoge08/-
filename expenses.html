@@ -13,11 +13,12 @@
         .back-btn { font-size: 14px; color: #007aff; text-decoration: none; background: #e5e5ea; padding: 8px 12px; border-radius: 12px; font-weight: bold; }
         .header h1 { font-size: 20px; margin: 0; padding-right: 70px; }
 
-        /* 新增：筛选栏样式 */
+        /* ================= 新增的筛选栏 ================= */
         .filter-bar { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.04); }
-        .filter-bar select { flex: 1; min-width: 120px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; outline: none; background: #f5f5f7; }
-        .compare-btn { width: 100%; background: #007aff; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; transition: 0.2s; }
-        .compare-btn:hover { background: #005bb5; }
+        .filter-bar select { flex: 1; min-width: 100px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; outline: none; background: #f5f5f7; }
+        .filter-btn { background: #007aff; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .filter-btn:active { background: #005bb5; }
+        .reset-btn { background: #e5e5ea; color: #1d1d1f; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
 
         .expense-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); }
         
@@ -29,11 +30,6 @@
         .expense-amount { color: #ff3b30; font-weight: bold; font-size: 18px; }
         
         .no-expense { color: #a1a1a6; font-size: 14px; text-align: center; padding: 30px 0; }
-
-        @media (min-width: 500px) {
-            .filter-bar select { width: auto; flex: none; }
-            .compare-btn { width: auto; }
-        }
     </style>
 </head>
 <body>
@@ -44,12 +40,13 @@
         <h1>💸 扣款明细</h1>
     </div>
 
-    <!-- 新增的按日期查询栏 -->
+    <!-- 日期查询筛选栏 -->
     <div class="filter-bar" id="filter-bar" style="display: none;">
         <select id="start-date"></select>
         <span style="color: #86868b; font-size: 14px;">至</span>
         <select id="end-date"></select>
-        <button class="compare-btn" onclick="filterExpenses()">查询数据</button>
+        <button class="filter-btn" onclick="filterExpenses()">查询</button>
+        <button class="reset-btn" onclick="resetExpenses()">重置</button>
     </div>
 
     <div class="expense-card">
@@ -60,27 +57,34 @@
 </div>
 
 <script>
-    let globalExpenses = [];
+    let globalExpenses = []; // 存储原始数据
 
-    // 解析日期字符串为时间戳，方便排序和比较
+    // 日期解析辅助函数 (兼容 2026年10月19日 和 10月19日)
     function parseDateToTimestamp(dateStr) {
         const match = dateStr.match(/(?:(\d+)年)?(\d+)月(\d+)日/);
         if (match) {
             const year = match[1] ? Number(match[1]) : new Date().getFullYear();
-            const month = Number(match[2]) - 1; // JS 中月份是 0-11
+            const month = Number(match[2]) - 1;
             const day = Number(match[3]);
             return new Date(year, month, day).getTime();
         }
         return 0;
     }
 
-    // 渲染列表的通用函数
-    function renderList(dataArray) {
+    // 渲染列表的函数（isAscending: true 为正序即旧到新，false 为降序即新到旧）
+    function renderList(dataArray, isAscending = false) {
         const listEl = document.getElementById('expense-list');
         listEl.innerHTML = '';
 
         if (dataArray && dataArray.length > 0) {
-            dataArray.forEach(item => {
+            // 根据时间戳排序
+            const sortedData = [...dataArray].sort((a, b) => {
+                const timeA = parseDateToTimestamp(a.date);
+                const timeB = parseDateToTimestamp(b.date);
+                return isAscending ? timeA - timeB : timeB - timeA;
+            });
+
+            sortedData.forEach(item => {
                 listEl.innerHTML += `
                     <li class="expense-item">
                         <div>
@@ -92,66 +96,78 @@
                 `;
             });
         } else {
-            listEl.innerHTML = '<li class="no-expense">该时间段内无扣款记录～</li>';
+            listEl.innerHTML = '<li class="no-expense">没有找到符合条件的扣款记录～</li>';
         }
     }
 
-    // 初始化加载数据
+    // 初始化下拉框选项
+    function initSelectOptions() {
+        const startSel = document.getElementById('start-date');
+        const endSel = document.getElementById('end-date');
+        startSel.innerHTML = ''; endSel.innerHTML = '';
+
+        // 提取所有不重复的日期并正序排列
+        const uniqueDates = [...new Set(globalExpenses.map(item => item.date))];
+        uniqueDates.sort((a, b) => parseDateToTimestamp(a) - parseDateToTimestamp(b));
+
+        uniqueDates.forEach(date => {
+            startSel.innerHTML += `<option value="${date}">${date}</option>`;
+            endSel.innerHTML += `<option value="${date}">${date}</option>`;
+        });
+
+        // 默认起止日期选择最老和最新的一天
+        if (uniqueDates.length > 0) {
+            startSel.value = uniqueDates[0];
+            endSel.value = uniqueDates[uniqueDates.length - 1];
+        }
+    }
+
+    // 页面加载时拉取数据
     fetch('expenses.json')
         .then(response => response.json())
         .then(expenses => {
-            if (!expenses || expenses.length === 0) {
+            if (expenses && expenses.length > 0) {
+                globalExpenses = expenses;
+                document.getElementById('filter-bar').style.display = 'flex';
+                initSelectOptions();
+                // 默认展示全部，降序排列（最新的在上）
+                renderList(globalExpenses, false);
+            } else {
                 document.getElementById('expense-list').innerHTML = '<li class="no-expense">近期无扣款记录，大王很节约～</li>';
-                return;
             }
-
-            // 1. 智能排序：无论 JSON 怎么乱写，强制按日期从新到旧排列
-            globalExpenses = [...expenses].sort((a, b) => {
-                return parseDateToTimestamp(b.date) - parseDateToTimestamp(a.date);
-            });
-
-            // 2. 初始化筛选下拉框
-            const startSel = document.getElementById('start-date');
-            const endSel = document.getElementById('end-date');
-            
-            // 提取不重复的日期作为下拉选项
-            const uniqueDates = [...new Set(globalExpenses.map(item => item.date))];
-            
-            uniqueDates.forEach(date => {
-                startSel.innerHTML += `<option value="${date}">${date}</option>`;
-                endSel.innerHTML += `<option value="${date}">${date}</option>`;
-            });
-
-            // 默认起始日期选最旧的，结束日期选最新的
-            startSel.value = uniqueDates[uniqueDates.length - 1];
-            endSel.value = uniqueDates[0];
-
-            // 显示筛选栏
-            document.getElementById('filter-bar').style.display = 'flex';
-
-            // 3. 默认渲染全部数据
-            renderList(globalExpenses);
         })
         .catch(err => {
-            document.getElementById('expense-list').innerHTML = '<li class="no-expense">读取失败，请检查 expenses.json 格式</li>';
+            document.getElementById('expense-list').innerHTML = '<li class="no-expense">读取失败，请检查 expenses.json</li>';
         });
 
-    // 执行筛选查询
+    // 点击查询
     function filterExpenses() {
         const startDate = document.getElementById('start-date').value;
         const endDate = document.getElementById('end-date').value;
+        
+        let startTs = parseDateToTimestamp(startDate);
+        let endTs = parseDateToTimestamp(endDate);
 
-        const startTs = parseDateToTimestamp(startDate);
-        const endTs = parseDateToTimestamp(endDate);
+        // 防呆：如果起始日期大于结束日期，交换它们
+        if (startTs > endTs) {
+            [startTs, endTs] = [endTs, startTs];
+        }
 
-        // 过滤出在时间范围内的数据
+        // 筛选出范围内的数据
         const filteredData = globalExpenses.filter(item => {
-            const itemTs = parseDateToTimestamp(item.date);
-            return itemTs >= Math.min(startTs, endTs) && itemTs <= Math.max(startTs, endTs);
+            const ts = parseDateToTimestamp(item.date);
+            return ts >= startTs && ts <= endTs;
         });
 
-        // 渲染过滤后的结果（由于 globalExpenses 已经排好序，过滤后依然是从新到旧）
-        renderList(filteredData);
+        // 渲染查询结果（正序排列：旧到新）
+        renderList(filteredData, true);
+    }
+
+    // 点击重置
+    function resetExpenses() {
+        initSelectOptions();
+        // 恢复默认展示全部，降序排列（最新的在上）
+        renderList(globalExpenses, false);
     }
 </script>
 
