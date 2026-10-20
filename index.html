@@ -56,7 +56,7 @@
             display: inline-block; 
             filter: drop-shadow(0 8px 12px rgba(0,0,0,0.25)); 
             touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent; /* 去除手机点击高亮 */
+            -webkit-tap-highlight-color: transparent;
         }
         
         /* JS 控制的按压样式 */
@@ -111,6 +111,10 @@
 </head>
 <body>
 
+<!-- 音频标签恢复，确保最稳定的兼容性 -->
+<audio id="soundPress" src="Ya1.mp3" preload="auto"></audio>
+<audio id="soundRelease" src="Ya2.mp3" preload="auto"></audio>
+
 <div class="top-balance" id="balance-card">
     <p id="balance-title">最新账户可用余额</p>
     <h2 id="home-balance">载入中...</h2>
@@ -150,25 +154,23 @@
     const balanceText = document.getElementById('home-balance');
     const balanceCard = document.getElementById('balance-card');
     const balanceTitle = document.getElementById('balance-title');
+    
+    const audioPress = document.getElementById('soundPress');
+    const audioRelease = document.getElementById('soundRelease');
 
-    // ================= 音频预加载机制 =================
-    // 用 JS 原生 Audio 对象预先加载，比 HTML 标签更稳、延迟极低
-    const soundPress = new Audio('Ya1.mp3');
-    const soundRelease = new Audio('Ya2.mp3');
-    soundPress.load();
-    soundRelease.load();
+    // 静音预加载，破解手机浏览器音频延迟
+    window.addEventListener('pointerdown', function unlockAudio() {
+        audioPress.play().then(() => { audioPress.pause(); audioPress.currentTime = 0; }).catch(()=>{});
+        audioRelease.play().then(() => { audioRelease.pause(); audioRelease.currentTime = 0; }).catch(()=>{});
+        window.removeEventListener('pointerdown', unlockAudio);
+    }, { once: true });
 
-    function playAudio(audioToPlay, audioToStop) {
-        // 强制停止另一段音频，绝对防止重叠
-        if (audioToStop) {
-            audioToStop.pause();
-            audioToStop.currentTime = 0;
-        }
-        // 播放当前音频
-        audioToPlay.currentTime = 0;
-        let playPromise = audioToPlay.play();
+    function playSound(audio) {
+        if (!audio) return;
+        audio.currentTime = 0; 
+        let playPromise = audio.play();
         if (playPromise !== undefined) {
-            playPromise.catch(error => { console.log("等待用户交互播放音频"); });
+            playPromise.catch(error => { console.log("等待用户交互"); });
         }
     }
 
@@ -315,49 +317,25 @@
         "生意兴隆，财源广进！"
     ];
 
-    // 判断设备是否支持触摸
-    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    // 绑定 PointerEvent（同时兼容鼠标和触摸，且手机端无延迟）
+    mascot.addEventListener('pointerdown', function(e) {
+        mascot.classList.add('pressing');
+        playSound(audioPress); // 播放按下音效
+    });
 
-    if (isTouchDevice) {
-        // 【手机端逻辑】：用防止默认事件来彻底屏蔽鼠标事件，解决重复音效
-        mascot.addEventListener('touchstart', function(e) {
-            e.preventDefault(); // 关键：阻止浏览器模拟鼠标事件
-            mascot.classList.add('pressing');
-            playAudio(soundPress, soundRelease); // 播放按下音，掐断释放音
-        }, { passive: false });
+    mascot.addEventListener('pointerup', function(e) {
+        mascot.classList.remove('pressing');
+        playSound(audioRelease); // 播放释放音效
+        executeMascotClick();    // 触发扣钱、气泡等动画
+    });
 
-        mascot.addEventListener('touchend', function(e) {
-            e.preventDefault(); // 关键：阻止浏览器模拟鼠标事件
-            mascot.classList.remove('pressing');
-            playAudio(soundRelease, soundPress); // 播放释放音，掐断按下音
-            executeMascotClick(); // 直接执行点击逻辑，不依赖 click 事件
-        });
-        
-        // 防止手指滑出橘子区域
-        mascot.addEventListener('touchcancel', function(e) {
-            mascot.classList.remove('pressing');
-        });
-
-    } else {
-        // 【电脑端逻辑】
-        mascot.addEventListener('mousedown', function(e) {
-            mascot.classList.add('pressing');
-            playAudio(soundPress, soundRelease);
-        });
-
-        mascot.addEventListener('mouseup', function(e) {
-            mascot.classList.remove('pressing');
-            playAudio(soundRelease, soundPress);
-        });
-
-        mascot.addEventListener('mouseleave', function() {
-            mascot.classList.remove('pressing');
-        });
-
-        mascot.addEventListener('click', function(e) {
-            executeMascotClick();
-        });
-    }
+    // 防止鼠标/手指滑出橘子区域
+    mascot.addEventListener('pointerleave', function() {
+        mascot.classList.remove('pressing');
+    });
+    mascot.addEventListener('pointercancel', function() {
+        mascot.classList.remove('pressing');
+    });
 
     // 核心动画逻辑
     function executeMascotClick() {
