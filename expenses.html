@@ -13,12 +13,68 @@
         .back-btn { font-size: 14px; color: #007aff; text-decoration: none; background: #e5e5ea; padding: 8px 12px; border-radius: 12px; font-weight: bold; }
         .header h1 { font-size: 20px; margin: 0; padding-right: 70px; }
 
-        /* ================= 新增的筛选栏 ================= */
-        .filter-bar { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.04); }
-        .filter-bar select { flex: 1; min-width: 100px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; outline: none; background: #f5f5f7; }
-        .filter-btn { background: #007aff; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        /* ================= 优化后的筛选栏 ================= */
+        .filter-bar { 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 10px; 
+            margin-bottom: 15px; 
+            background: white; 
+            padding: 15px; 
+            border-radius: 15px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.04); 
+        }
+        
+        /* 日期选择区（手机端占满第一行） */
+        .date-inputs {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1 1 100%; /* 手机端强制占满一行 */
+            justify-content: center;
+        }
+        .date-inputs select { 
+            flex: 1; 
+            max-width: 160px;
+            padding: 10px; 
+            border-radius: 8px; 
+            border: 1px solid #ccc; 
+            font-size: 14px; 
+            outline: none; 
+            background: #f5f5f7; 
+        }
+        .date-inputs span { color: #86868b; font-size: 14px; }
+
+        /* 按钮区（手机端占满第二行，两个按钮并排） */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+        .filter-btn, .reset-btn { 
+            flex: 1; /* 平分宽度 */
+            max-width: 160px;
+            padding: 10px 0; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 14px; 
+            transition: 0.2s; 
+            border: none;
+        }
+        .filter-btn { background: #007aff; color: white; }
         .filter-btn:active { background: #005bb5; }
-        .reset-btn { background: #e5e5ea; color: #1d1d1f; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .reset-btn { background: #e5e5ea; color: #1d1d1f; }
+
+        /* 电脑端宽屏适配：恢复成一行 */
+        @media (min-width: 550px) {
+            .filter-bar { flex-wrap: nowrap; }
+            .date-inputs { flex: 1 1 auto; }
+            .action-buttons { width: auto; }
+            .filter-btn, .reset-btn { padding: 10px 20px; max-width: none; }
+        }
 
         .expense-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); }
         
@@ -40,13 +96,17 @@
         <h1>💸 扣款明细</h1>
     </div>
 
-    <!-- 日期查询筛选栏 -->
+    <!-- 优化后的日期查询筛选栏 -->
     <div class="filter-bar" id="filter-bar" style="display: none;">
-        <select id="start-date"></select>
-        <span style="color: #86868b; font-size: 14px;">至</span>
-        <select id="end-date"></select>
-        <button class="filter-btn" onclick="filterExpenses()">查询</button>
-        <button class="reset-btn" onclick="resetExpenses()">重置</button>
+        <div class="date-inputs">
+            <select id="start-date"></select>
+            <span>至</span>
+            <select id="end-date"></select>
+        </div>
+        <div class="action-buttons">
+            <button class="filter-btn" onclick="filterExpenses()">查询</button>
+            <button class="reset-btn" onclick="resetExpenses()">重置</button>
+        </div>
     </div>
 
     <div class="expense-card">
