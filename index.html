@@ -9,14 +9,24 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
         
         /* 顶部余额卡片 */
-        .top-balance { background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 10px; margin-bottom: 30px; position: relative; transition: background 0.5s; }
+        .top-balance { 
+            background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 10px; margin-bottom: 30px; position: relative; 
+            transition: background 0.5s, transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 加了 transform 过渡，为了撞歪效果 */
+        }
+        
+        /* 被撞歪的效果类 */
+        .top-balance.wobble {
+            transform: rotate(8deg) skewX(-10deg) translate(10px, 20px);
+            box-shadow: -10px 15px 40px rgba(0,0,0,0.2);
+        }
+
         .top-balance p { margin: 0; font-size: 14px; opacity: 0.9; letter-spacing: 1px; transition: color 0.3s; }
         .top-balance p.crit-text { color: #ff3b30; font-weight: bold; opacity: 1; }
         
         .top-balance h2 { margin: 10px 0 0 0; font-size: clamp(28px, 8vw, 48px); font-weight: bold; white-space: nowrap; display: inline-block; transition: transform 0.1s ease; }
         .top-balance h2.pop { transform: scale(1.15); color: #ffeb3b; }
 
-        /* 震动动画 */
+        /* 普通震动动画 */
         @keyframes shake {
             0% { transform: translate(1px, 1px) rotate(0deg); }
             10% { transform: translate(-3px, -2px) rotate(-1deg); }
@@ -31,6 +41,22 @@
             100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
         .shake { animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) both; }
+
+        /* 核爆级剧烈震荡 */
+        @keyframes extreme-shake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            10% { transform: translate(-10px, -10px) rotate(-5deg); }
+            20% { transform: translate(15px, 5px) rotate(5deg); }
+            30% { transform: translate(-15px, 15px) rotate(-8deg); }
+            40% { transform: translate(15px, -10px) rotate(8deg); }
+            50% { transform: translate(-10px, 15px) rotate(-5deg); }
+            60% { transform: translate(10px, -15px) rotate(5deg); }
+            70% { transform: translate(-15px, 5px) rotate(-8deg); }
+            80% { transform: translate(15px, 10px) rotate(8deg); }
+            90% { transform: translate(-5px, -15px) rotate(-5deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        .extreme-shake { animation: extreme-shake 1s cubic-bezier(.36,.07,.19,.97) both; }
 
         .menu-container { width: 100%; max-width: 600px; text-align: center; }
         h1 { font-size: 22px; margin-bottom: 25px; color: #1d1d1f; }
@@ -59,63 +85,18 @@
             -webkit-tap-highlight-color: transparent;
         }
         
-        /* 正常按压样式 */
+        /* JS 控制的按压样式 */
         .mascot.pressing {
             transform: scale(1.3, 0.6) translateY(15px); 
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); 
         }
 
-        /* 2秒蓄力状态：高频震动+变红 */
-        .mascot.charging {
-            animation: chargeShake 0.2s infinite;
-            filter: drop-shadow(0 0 15px rgba(255,59,48,0.8)) hue-rotate(30deg) saturate(2);
+        /* 起飞动画（冲出屏幕） */
+        .mascot.flying {
+            transition: transform 1.5s cubic-bezier(0.5, 0, 1, 1), opacity 1.5s !important;
+            transform: translateY(-200vh) rotate(1080deg) scale(0.5) !important;
+            opacity: 0;
         }
-        @keyframes chargeShake {
-            0% { transform: translate(1px, 1px) scale(1.3, 0.6) rotate(0deg); }
-            50% { transform: translate(-2px, -1px) scale(1.3, 0.6) rotate(-2deg); }
-            100% { transform: translate(2px, 2px) scale(1.3, 0.6) rotate(2deg); }
-        }
-
-        /* 5秒高跳 */
-        .mascot.jump-high {
-            animation: jumpHigh 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-        }
-        @keyframes jumpHigh {
-            0% { transform: translateY(15px) scale(1.3, 0.6); }
-            20% { transform: translateY(-200px) scale(0.8, 1.2); } /* 拉伸 */
-            80% { transform: translateY(-200px) scale(0.8, 1.2); }
-            100% { transform: translateY(0) scale(1, 1); }
-        }
-
-        /* 8秒冲天 */
-        .mascot.jump-sky {
-            animation: jumpSky 1s cubic-bezier(0.5, 0, 1, 1) forwards;
-        }
-        @keyframes jumpSky {
-            0% { transform: translateY(15px) scale(1.3, 0.6); }
-            50% { transform: translateY(-300px) scale(0.5, 2); }
-            100% { transform: translateY(-100vh) scale(0.1, 0.1); opacity: 0; }
-        }
-
-        /* 地震效果（比普通震动更剧烈） */
-        @keyframes earthquake {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            10% { transform: translate(-10px, 10px) rotate(-2deg); }
-            20% { transform: translate(10px, -10px) rotate(2deg); }
-            30% { transform: translate(-15px, 5px) rotate(-1deg); }
-            40% { transform: translate(15px, -5px) rotate(1deg); }
-            50% { transform: translate(-10px, -10px) rotate(-2deg); }
-            60% { transform: translate(10px, 10px) rotate(2deg); }
-            70% { transform: translate(-5px, -5px) rotate(0deg); }
-            80% { transform: translate(5px, 5px) rotate(0deg); }
-            90% { transform: translate(-2px, 2px) rotate(0deg); }
-            100% { transform: translate(0, 0) rotate(0deg); }
-        }
-        .earthquake-active {
-            animation: earthquake 1.5s cubic-bezier(.36,.07,.19,.97) both;
-            overflow: hidden;
-        }
-
 
         /* 动漫气泡对话框 */
         .speech-bubble {
@@ -209,7 +190,7 @@
     const soundPress = document.getElementById('soundPress');
     const soundRelease = document.getElementById('soundRelease');
 
-    // 【手机端终极解锁】：在屏幕上随便碰一下，就静音预加载音频，彻底解决延迟
+    // 【手机端终极解锁】：预加载音频
     window.addEventListener('touchstart', function unlockAudio() {
         soundPress.play().then(() => { soundPress.pause(); soundPress.currentTime = 0; }).catch(()=>{});
         soundRelease.play().then(() => { soundRelease.pause(); soundRelease.currentTime = 0; }).catch(()=>{});
@@ -354,15 +335,10 @@
     });
 
 
-    // ================= 橘子长按蓄力与交互逻辑 =================
+    // ================= 橘子交互与长按彩蛋逻辑 =================
     const mascot = document.getElementById('magic-mascot');
     const bubble = document.getElementById('speechBubble');
     let bubbleTimeout;
-
-    // 长按计时器
-    let pressTimer2, pressTimer5, pressTimer8;
-    let pressStartTime = 0;
-    let isLongPress = false;
 
     const orangeQuotes = [
         "今天辛苦啦！记得对账哦～",
@@ -371,112 +347,105 @@
         "今天赚大钱了吗？",
         "花了我一块钱，心疼...",
         "要不要来杯下午茶？",
-        "生意兴隆，财源广进！",
-        "别按了！我要生气了！",
-        "啊啊啊！我要起飞了！"
+        "生意兴隆，财源广进！"
     ];
 
-    function handlePress(e) {
-        // 如果正在飞天，不响应
-        if (mascot.classList.contains('jump-sky') || document.body.classList.contains('earthquake-active')) return;
+    // 长按计时相关变量
+    let pressStartTime = 0;
+    let holdTimer = null;
+    let isLongPressTriggered = false;
+    let isFlying = false;
 
-        playAudio(soundPress);
-        pressStartTime = Date.now();
-        isLongPress = false;
+    // 触发飞出屏幕的核爆效果
+    function triggerFlyAway() {
+        if (isFlying) return;
+        isFlying = true;
+        isLongPressTriggered = true;
         
-        mascot.classList.remove('jump-high'); // 清理之前的跳跃
+        // 1. 橘子冲出屏幕
+        mascot.classList.remove('pressing');
+        mascot.classList.add('flying');
+        
+        // 2. 屏幕剧烈震荡
+        document.body.classList.add('extreme-shake');
+        setTimeout(() => document.body.classList.remove('extreme-shake'), 1000);
+
+        // 3. 余额框被撞歪
+        balanceCard.classList.add('wobble');
+        
+        // 4. 播放比较爽的音效（如果有的话，这里我们直接用松开音效代替，或者不播）
+        playAudio(soundRelease);
+    }
+
+    function handlePress(e) {
+        if (isFlying) return; // 如果已经飞走了，就不再响应
+        isLongPressTriggered = false;
         mascot.classList.add('pressing');
+        playAudio(soundPress);
+        
+        pressStartTime = Date.now();
 
-        // 2秒：开始蓄力（疯狂震动）
-        pressTimer2 = setTimeout(() => {
-            isLongPress = true;
-            mascot.classList.add('charging');
-            bubble.innerText = "啊啊啊！我要蓄力了！";
-            bubble.classList.add('show');
-        }, 2000);
-
-        // 5秒：高跳
-        pressTimer5 = setTimeout(() => {
-            mascot.classList.remove('charging');
-            mascot.classList.add('jump-high');
-            bubble.classList.remove('show');
-            
-            // 1秒后落地，清理状态
-            setTimeout(() => {
-                mascot.classList.remove('jump-high');
-                mascot.classList.remove('pressing');
-            }, 1000);
-        }, 5000);
-
-        // 8秒：冲天 + 地震
-        pressTimer8 = setTimeout(() => {
-            mascot.classList.remove('jump-high');
-            mascot.classList.add('jump-sky');
-            bubble.classList.remove('show');
-            
-            // 0.5秒后（橘子飞出屏幕一半时），主页地震
-            setTimeout(() => {
-                document.body.classList.add('earthquake-active');
-            }, 500);
-
-            // 2秒后地震结束，橘子飞回来
-            setTimeout(() => {
-                document.body.classList.remove('earthquake-active');
-                mascot.classList.remove('jump-sky');
-                mascot.classList.remove('pressing');
-            }, 2000);
-
-        }, 8000);
+        // 设置8秒定时器，一旦达到8秒直接起飞
+        holdTimer = setTimeout(triggerFlyAway, 8000);
     }
 
     function handleRelease(e) {
-        // 清理所有长按定时器
-        clearTimeout(pressTimer2);
-        clearTimeout(pressTimer5);
-        clearTimeout(pressTimer8);
-
-        // 如果已经飞天了，不管松手
-        if (mascot.classList.contains('jump-sky')) return;
-
-        // 如果没有触发跳跃，恢复原状
-        if (!mascot.classList.contains('jump-high')) {
-            mascot.classList.remove('pressing', 'charging');
-            playAudio(soundRelease);
-        }
-
-        // 判断是否为短按
+        if (isFlying) return;
+        mascot.classList.remove('pressing');
+        
+        clearTimeout(holdTimer); // 清除8秒定时器
+        
         const pressDuration = Date.now() - pressStartTime;
-        // 小于2秒算短按，执行正常的扣钱逻辑
-        if (pressDuration < 2000) {
+        
+        // 播放松开音效
+        playAudio(soundRelease);
+
+        if (pressDuration > 2000 && pressDuration <= 8000) {
+            // 2秒到8秒之间：线性跳跃
+            // 算出跳跃高度，按得越久跳得越高 (假设每多按1秒多跳120px，最高约720px)
+            const jumpHeight = (pressDuration / 1000) * 120; 
+            
+            // 执行跳跃
+            mascot.style.transition = 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            mascot.style.transform = `translateY(-${jumpHeight}px) scale(1)`;
+            
+            // 跳跃完落回原地
+            setTimeout(() => {
+                mascot.style.transform = '';
+                setTimeout(() => { mascot.style.transition = ''; }, 500);
+            }, 400);
+            
+            // 依然执行普通的扣钱逻辑
+            executeMascotClick();
+            
+        } else if (pressDuration <= 2000) {
+            // 2秒以内的短按：正常扣钱
             executeMascotClick();
         }
     }
 
-    // 绑定事件
+    // 手机端事件
     mascot.addEventListener('touchstart', handlePress, { passive: true });
     mascot.addEventListener('touchend', function(e) {
         e.preventDefault(); 
-        handleRelease();
+        handleRelease(e);
     });
     mascot.addEventListener('touchcancel', function(e) {
-        clearTimeout(pressTimer2);
-        clearTimeout(pressTimer5);
-        clearTimeout(pressTimer8);
-        mascot.classList.remove('pressing', 'charging');
+        clearTimeout(holdTimer);
+        mascot.classList.remove('pressing');
     });
 
+    // 电脑端事件
     mascot.addEventListener('mousedown', handlePress);
     mascot.addEventListener('mouseup', function(e) {
-        handleRelease();
+        handleRelease(e);
     });
     mascot.addEventListener('mouseleave', function() {
-        clearTimeout(pressTimer2);
-        clearTimeout(pressTimer5);
-        clearTimeout(pressTimer8);
-        mascot.classList.remove('pressing', 'charging');
+        clearTimeout(holdTimer);
+        mascot.classList.remove('pressing');
     });
 
-    // 短按点击的动画逻辑
+    // 普通短按的核心逻辑
     function executeMascotClick() {
         if (currentBalance > 0) {
             currentBalance -= 1;
