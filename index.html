@@ -12,7 +12,11 @@
         .top-balance { background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 10px; margin-bottom: 30px; position: relative; transition: background 0.5s; }
         .top-balance p { margin: 0; font-size: 14px; opacity: 0.9; letter-spacing: 1px; transition: color 0.3s; }
         .top-balance p.crit-text { color: #ff3b30; font-weight: bold; opacity: 1; }
-        .top-balance h2 { margin: 10px 0 0 0; font-size: clamp(28px, 8vw, 48px); font-weight: bold; white-space: nowrap; display: inline-block; }
+        
+        /* 余额数字：加上了过渡动画 */
+        .top-balance h2 { margin: 10px 0 0 0; font-size: clamp(28px, 8vw, 48px); font-weight: bold; white-space: nowrap; display: inline-block; transition: transform 0.1s ease; }
+        /* 减钱时的放大效果类 */
+        .top-balance h2.pop { transform: scale(1.15); color: #ffeb3b; /* 变大并且微微变黄一下，视觉反馈更好 */ }
 
         /* 震动动画 */
         @keyframes shake {
@@ -103,7 +107,7 @@
         </a>
     </div>
 
-    <p class="tips-text">Tips：更多功能，敬请期待...</p>
+    <p class="tips-text">Tips：更多功能，敬请期待（催我找人弄你）</p>
 </div>
 
 <div class="floating-mascot-container">
@@ -197,12 +201,19 @@
         balanceText.innerText = '读取失败';
     });
 
+    // 橘子点击交互
     const mascot = document.getElementById('magic-mascot');
     mascot.addEventListener('click', function(e) {
         if (currentBalance > 0) {
             currentBalance -= 1;
             balanceText.innerText = '$' + currentBalance.toLocaleString();
+            
+            // 加上数字放大变黄的反馈效果（替代原来生硬的变化）
+            balanceText.classList.add('pop');
+            setTimeout(() => { balanceText.classList.remove('pop'); }, 100); 
         }
+        
+        // 飘字特效
         const minusOne = document.createElement('div');
         minusOne.className = 'minus-one';
         minusOne.innerText = '-$1';
