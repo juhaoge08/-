@@ -122,7 +122,7 @@
         </a>
     </div>
 
-    <p class="tips-text">Tips：更多功能，敬请期待（催我找人弄你）</p>
+    <p class="tips-text">Tips：更多功能，敬请期待...</p>
 </div>
 
 <div class="floating-mascot-container">
@@ -154,7 +154,7 @@
         window.requestAnimationFrame(step);
     }
 
-    // 日期转换辅助函数，用于对比日期先后
+    // 日期转换辅助函数，支持 2026年10月20日 和 10月20日 两种格式
     function parseDateToTimestamp(dateStr) {
         const match = dateStr.match(/(?:(\d+)年)?(\d+)月(\d+)日/);
         if (match) {
@@ -185,13 +185,11 @@
         }
 
         let baseBalance = 0;
-        let baseDateStr = "";
         let baseTimestamp = 0;
 
         if (lastBalanceIndex >= 0) {
             baseBalance = Number(data[lastBalanceIndex].balance);
-            baseDateStr = data[lastBalanceIndex].date;
-            baseTimestamp = parseDateToTimestamp(baseDateStr);
+            baseTimestamp = parseDateToTimestamp(data[lastBalanceIndex].date);
         }
 
         // 2. 计算锚点之后的营业额增加
@@ -206,48 +204,45 @@
         if (expenses && expenses.length > 0) {
             expenses.forEach(exp => {
                 const expTimestamp = parseDateToTimestamp(exp.date);
-                // 只要这笔支出是发生在锚点当天之后的，就扣减（因为锚点当天的账应该已经平了）
                 if (lastBalanceIndex < 0 || expTimestamp > baseTimestamp) {
                     additionalExpense += Number(exp.amount || 0);
                 }
             });
         }
 
-        // 最终算出的真实余额
         const currentRealBalance = baseBalance + additionalRevenue - additionalExpense;
         
-        // 4. 对比上一次本地存储的余额，决定是暴击还是回血
+        // 4. 特效判断与滚动
         const lastRealBalStr = localStorage.getItem('last_real_balance');
-        const lastExpenseIdStr = localStorage.getItem('last_expense_id');
+        const lastExpenseFingerprint = localStorage.getItem('last_expense_fingerprint');
         
-        let latestExpenseId = 0;
+        let currentFingerprint = "";
         let latestMemo = "账目调整";
-        
         if (expenses && expenses.length > 0) {
-            latestExpenseId = Number(expenses[expenses.length - 1].id);
-            latestMemo = expenses[expenses.length - 1].memo;
+            const latestExp = expenses[expenses.length - 1];
+            currentFingerprint = latestExp.date + "_" + latestExp.amount + "_" + latestExp.memo;
+            latestMemo = latestExp.memo;
         }
+
+        // 默认从哪里开始滚（没有历史记录就从 0 开始）
+        let startNum = 0; 
 
         if (lastRealBalStr !== null) {
             const lastRealBal = Number(lastRealBalStr);
-            
+            startNum = lastRealBal; // 如果有历史记录，就从历史记录开始滚
+
             if (currentRealBalance > lastRealBal) {
-                // 金额增加：回血特效
-                animateBalance(lastRealBal, currentRealBalance, 1500);
-                
+                // 回血特效
                 const healAmount = currentRealBalance - lastRealBal;
                 const healDiv = document.createElement('div');
                 healDiv.className = 'heal-float';
-                // 如果是因为营业额更新加的钱
-                let reason = lastExpenseIdStr !== null && latestExpenseId > Number(lastExpenseIdStr) ? "退款/调整" : "营业额增加";
+                let reason = (currentFingerprint !== lastExpenseFingerprint && currentFingerprint !== "") ? "退款/调整" : "营业额增加";
                 healDiv.innerHTML = `+$${healAmount.toLocaleString()}<span>${reason}</span>`;
                 document.body.appendChild(healDiv);
                 setTimeout(() => healDiv.remove(), 2000);
                 
             } else if (currentRealBalance < lastRealBal) {
-                // 金额减少：暴击特效
-                animateBalance(lastRealBal, currentRealBalance, 1500);
-                
+                // 暴击特效
                 balanceCard.classList.add('shake');
                 setTimeout(() => balanceCard.classList.remove('shake'), 600);
                 balanceTitle.classList.add('crit-text');
@@ -256,28 +251,20 @@
                 const critDiv = document.createElement('div');
                 critDiv.className = 'crit-float';
                 let deductAmount = lastRealBal - currentRealBalance;
-                // 如果是因为新加了 expense 导致扣款
-                let reason = latestMemo;
-                if (lastExpenseIdStr === null || latestExpenseId <= Number(lastExpenseIdStr)) {
-                    reason = "营业额调整/账目减少"; // 没有新支出，是营业额改小了
-                }
+                let reason = (currentFingerprint !== lastExpenseFingerprint) ? latestMemo : "营业额调整/账目减少";
                 critDiv.innerHTML = `-$${deductAmount.toLocaleString()}<span>${reason}</span>`;
                 document.body.appendChild(critDiv);
                 setTimeout(() => critDiv.remove(), 2000);
-                
-            } else {
-                // 余额没变
-                balanceText.innerText = '$' + currentRealBalance.toLocaleString();
             }
-        } else {
-            // 首次打开，直接滚动
-            animateBalance(0, currentRealBalance, 1500);
         }
 
-        // 更新存储
+        // 无论有没有特效，最后统一执行滚动动画！
+        animateBalance(startNum, currentRealBalance, 1500);
+
+        // 更新本地记忆
         localStorage.setItem('last_real_balance', currentRealBalance);
-        if (expenses && expenses.length > 0) {
-            localStorage.setItem('last_expense_id', latestExpenseId);
+        if (currentFingerprint !== "") {
+            localStorage.setItem('last_expense_fingerprint', currentFingerprint);
         }
         
         currentBalance = currentRealBalance; 
@@ -294,12 +281,10 @@
 
     const orangeQuotes = [
         "今天辛苦啦！记得对账哦～",
-        "谁能凭爱意要富士山私有？",
-        "我要睡觉...",
+        "不许偷懒，好好看店！",
         "今天赚大钱了吗？",
         "花了我一块钱，心疼...",
         "要不要来杯下午茶？",
-        "别点我了！",
         "生意兴隆，财源广进！"
     ];
 
