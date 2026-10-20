@@ -11,7 +11,6 @@
         /* 顶部余额卡片 */
         .top-balance { 
             background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 10px; margin-bottom: 30px; position: relative; 
-            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.5s; 
         }
         .top-balance p { margin: 0; font-size: 14px; opacity: 0.9; letter-spacing: 1px; transition: color 0.3s; }
         .top-balance p.crit-text { color: #ff3b30; font-weight: bold; opacity: 1; }
@@ -19,13 +18,29 @@
         .top-balance h2 { margin: 10px 0 0 0; font-size: clamp(28px, 8vw, 48px); font-weight: bold; white-space: nowrap; display: inline-block; transition: transform 0.1s ease; }
         .top-balance h2.pop { transform: scale(1.15); color: #ffeb3b; }
 
-        /* 卡片被撞歪的状态 */
+        /* 卡片被撞毁的坍塌动画 */
         .top-balance.smashed {
-            transform: rotate(12deg) translate(15px, 30px) !important;
+            animation: collapseCard 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
             border: 3px solid #ff3b30;
+            box-shadow: 0 20px 50px rgba(255, 59, 48, 0.5); /* 撞击后的红晕 */
+            z-index: 1; /* 让橘子能在它之上穿模飞过 */
+        }
+        
+        /* 撞击瞬间卡片内文字的震动 */
+        .top-balance.smashed h2, .top-balance.smashed p {
+            transform: rotate(-6deg) scale(0.95);
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
-        /* 震动动画 */
+        @keyframes collapseCard {
+            0% { transform: rotate(0deg) translate(0, 0) scale(1); }
+            15% { transform: rotate(-8deg) translate(-15px, -20px) scale(1.1, 0.8); } /* 受到剧烈撞击，向上凹陷 */
+            40% { transform: rotate(18deg) translate(25px, 40px) scale(0.95, 1.05); } /* 坍塌倾斜 */
+            70% { transform: rotate(8deg) translate(15px, 25px) scale(1.02, 0.98); } /* 弹性回弹 */
+            100% { transform: rotate(12deg) translate(15px, 35px) scale(1); } /* 最终坏掉的定格状态 */
+        }
+
+        /* 震动动画 (用于普通暴击扣款) */
         @keyframes shake {
             0% { transform: translate(1px, 1px) rotate(0deg); }
             10% { transform: translate(-3px, -2px) rotate(-1deg); }
@@ -65,7 +80,6 @@
             filter: drop-shadow(0 8px 12px rgba(0,0,0,0.25)); 
             touch-action: none;
             -webkit-tap-highlight-color: transparent;
-            /* 恢复默认的 Q 弹过渡，用于普通按压 */
             transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.1s ease; 
         }
         
@@ -326,44 +340,42 @@
     let pressStartTime = 0;
     let isPressing = false;
     let isAnimating = false;
+    let hasSmashed = false; // 记录是否已经撞毁过卡片，防止重复触发
 
     mascot.addEventListener('pointerdown', function(e) {
         if (isAnimating) return;
         isPressing = true;
         pressStartTime = Date.now();
         mascot.classList.add('pressing');
-        mascot.style.transition = ''; // 恢复默认的压扁过渡
-        mascot.style.transform = '';  // 清除可能残留的跳跃位置
-        playAudio(soundPress); // 按下的瞬间播放第一段音效
+        mascot.style.transition = ''; 
+        mascot.style.transform = '';  
+        playAudio(soundPress); 
     });
 
     mascot.addEventListener('pointerup', function(e) {
         if (!isPressing || isAnimating) return;
         isPressing = false;
         
-        // 移除按压状态，触发 CSS 回弹效果（针对短按）
         mascot.classList.remove('pressing');
 
         const duration = Date.now() - pressStartTime;
 
         if (duration < 2000) {
-            // 短按（<2秒）：回弹，执行扣钱、气泡，播放第二段音效
+            // 短按（<2秒）
             playAudio(soundRelease);
             executeMascotClick();
         } else if (duration < 8000) {
-            // 长按跳跃（2-8秒）：执行物理跳跃
-            mascot.style.transform = 'translateY(0px)'; // 归位，准备交给物理引擎
-            // 将时间映射到高度：2000ms -> 100px, 8000ms -> 500px
+            // 长按跳跃（2-8秒）
+            mascot.style.transform = 'translateY(0px)'; 
             const jumpHeight = 100 + ((duration - 2000) / 6000) * 400; 
             performJump(jumpHeight, false);
         } else {
-            // 超级跳（>=8秒）：直接撞向顶部
+            // 超级跳（>=8秒）
             mascot.style.transform = 'translateY(0px)';
             performJump(0, true);
         }
     });
 
-    // 处理手指滑出屏幕或取消
     mascot.addEventListener('pointerleave', function() {
         if(isPressing) {
             isPressing = false;
@@ -383,91 +395,111 @@
         const startTime = performance.now();
         const g = 2500; // 像素/秒^2 的重力加速度
         
-        // 物理动画期间关闭 transition，让 JS 控制每一帧
         mascot.style.transition = 'none';
 
         const cardRect = balanceCard.getBoundingClientRect();
         const mascotRect = mascot.getBoundingClientRect();
-        // 计算橘子顶端碰到卡片底端需要的距离
         const hitDistance = mascotRect.top - cardRect.bottom + 10; 
 
         let v0;
+        let hitTime = 0;
+        let hitY = 0;
 
         if (isSuper) {
-            // 超级跳的初速度：保证它能飞过 hitDistance
-            v0 = Math.sqrt(2 * g * hitDistance) + 100; 
+            // 超级跳需要足够的初速度冲破屏幕
+            const neededHeight = hitDistance + window.innerHeight * 0.8;
+            v0 = Math.sqrt(2 * g * neededHeight) + 100; 
         } else {
             v0 = Math.sqrt(2 * g * maxHeight);
         }
 
         function animate(currentTime) {
             const elapsed = currentTime - startTime;
-            const t = elapsed / 1000; // 转换为秒
+            const t = elapsed / 1000;
 
-            // 位移公式：y = v0 * t - 0.5 * g * t^2
-            let y = v0 * t - 0.5 * g * t * t;
-
-            // 如果是超级跳，且已经撞到了卡片
-            if (isSuper && y >= hitDistance) {
-                triggerSmash();
+            // 如果已经撞击过，橘子进入“穿越飞行”状态
+            if (isSuper && hasSmashed) {
+                const timeSinceHit = currentTime - hitTime;
+                const flySpeed = 1.2; // 穿模飞出的速度 (像素/毫秒)
+                const flyY = hitY + (timeSinceHit * flySpeed);
+                
+                // 如果橘子完全飞出了屏幕顶部
+                if (-flyY + mascotRect.top < -150) {
+                    mascot.style.display = 'none';
+                    isAnimating = false;
+                    return; 
+                }
+                
+                // 带着惯性继续往上冲，并疯狂旋转
+                mascot.style.transform = `translateY(${-flyY}px) rotate(${(timeSinceHit / 3) % 360}deg)`;
+                requestAnimationFrame(animate);
                 return;
             }
 
+            // 正常的抛物线物理
+            let y = v0 * t - 0.5 * g * t * t;
+            
+            // 如果是超级跳，且刚好碰触到卡片
+            if (isSuper && y >= hitDistance) {
+                hasSmashed = true;
+                hitTime = currentTime;
+                hitY = y;
+                triggerSmash();
+                requestAnimationFrame(animate);
+                return;
+            }
+
+            // 普通跳跃落地
             if (!isSuper && y < 0) {
-                // 落地了
                 mascot.style.transform = `translateY(0px)`;
                 triggerLanding();
                 return;
             }
 
-            mascot.style.transform = `translateY(${-y}px)`;
+            // 旋转特效
+            let rotation = 0;
+            if (isSuper) {
+                rotation = (elapsed / 10) % 360; // 上升时缓慢自转
+            } else {
+                rotation = y * 0.1; 
+            }
+
+            mascot.style.transform = `translateY(${-y}px) rotate(${rotation}deg)`;
             requestAnimationFrame(animate);
         }
 
         requestAnimationFrame(animate);
     }
 
-    // 落地动画
+    // 落地动画（原地压扁再恢复）
     function triggerLanding() {
-        // 落地压扁
         mascot.style.transform = `scale(1.4, 0.5) translateY(15px)`;
-        playAudio(soundRelease); // 落地时播放第二段音效
+        playAudio(soundRelease);
         
         setTimeout(() => {
-            // Q弹恢复
             mascot.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
             mascot.style.transform = `scale(1, 1) translateY(0px)`;
             
             setTimeout(() => {
-                mascot.style.transition = ''; // 恢复默认
+                mascot.style.transition = ''; 
                 isAnimating = false;
             }, 400);
-        }, 100); // 压扁 0.1 秒后恢复
+        }, 100);
     }
 
-    // 撞击卡片动画
+    // 撞击卡片动画（卡片坍塌）
     function triggerSmash() {
-        // 卡片震荡
-        balanceCard.classList.add('shake');
         playAudio(soundPress); // 撞击音效
-
-        // 震荡结束后，卡片永久歪斜，橘子才消失
-        setTimeout(() => {
-            balanceCard.classList.remove('shake');
-            balanceCard.classList.add('smashed');
-            
-            mascot.style.display = 'none'; // 撞击完成后橘子消失
-            mascot.style.transform = `translateY(0px)`; // 重置位置
-        }, 600); // 等待 0.6 秒的震动动画结束
-
-        // 让标题变红表示被撞
+        
+        // 添加坍塌动画类
+        balanceCard.classList.add('smashed');
+        
+        // 修改文字状态
         balanceTitle.classList.add('crit-text');
         balanceTitle.innerText = "💥 被撞飞了！";
-
-        isAnimating = false;
     }
 
-    // 原有短按逻辑
+    // 短按逻辑
     function executeMascotClick() {
         if (currentBalance > 0) {
             currentBalance -= 1;
