@@ -342,20 +342,15 @@
     let isAnimating = false;
     let hasSmashed = false; // 记录是否已经撞毁过卡片，防止重复触发
 
-    // ★ 新增：长按容错半径（像素）。手指/鼠标在这个范围内轻微滑动不会中断蓄力
-    const PRESS_TOLERANCE = 80;
-    let pressStartX = 0;
-    let pressStartY = 0;
+    // ★ 全屏长按：只要按住橘子，任意位置移动都不取消，直到松手
     let activePointerId = null;
 
     mascot.addEventListener('pointerdown', function(e) {
         if (isAnimating) return;
         isPressing = true;
         pressStartTime = Date.now();
-        pressStartX = e.clientX;
-        pressStartY = e.clientY;
         activePointerId = e.pointerId;
-        // ★ 新增：捕获指针，滑出橘子本身范围后依然能收到 pointermove / pointerup
+        // ★ 捕获指针：滑出橘子范围甚至滑出屏幕内区域，依然能收到 pointerup
         try { mascot.setPointerCapture(e.pointerId); } catch (err) {}
         mascot.classList.add('pressing');
         mascot.style.transition = ''; 
@@ -363,7 +358,7 @@
         playAudio(soundPress); 
     });
 
-    // ★ 新增：统一释放逻辑
+    // ★ 统一的释放逻辑（松手才触发判定）
     function releasePress(e) {
         if (!isPressing || isAnimating) return;
         isPressing = false;
@@ -390,7 +385,7 @@
         }
     }
 
-    // ★ 新增：取消蓄力逻辑
+    // ★ 取消蓄力（仅浏览器意外中断时才走这里，例如来电、系统弹窗）
     function cancelPress(pointerId) {
         if (!isPressing) return;
         isPressing = false;
@@ -401,38 +396,22 @@
         }
     }
 
-    // ★ 新增：全局 pointermove 判断滑动距离，超过容错半径才取消蓄力
-    document.addEventListener('pointermove', function(e) {
-        if (!isPressing || isAnimating) return;
-        if (activePointerId !== null && e.pointerId !== activePointerId) return;
-        const dx = e.clientX - pressStartX;
-        const dy = e.clientY - pressStartY;
-        if (Math.sqrt(dx * dx + dy * dy) > PRESS_TOLERANCE) {
-            cancelPress(e.pointerId);
-        }
-    }, { passive: true });
-
-    // ★ 新增：全局 pointerup 兜底，手指/鼠标在橘子外松开也能正常释放
+    // ★ 全局 pointerup：无论手指/鼠标移动到屏幕哪个角落，松手都会触发
     document.addEventListener('pointerup', function(e) {
         if (!isPressing || isAnimating) return;
         if (activePointerId !== null && e.pointerId !== activePointerId) return;
         releasePress(e);
     });
 
+    // 橘子自身 pointerup（保证与全局监听兼容，内部有 isPressing 去重）
     mascot.addEventListener('pointerup', function(e) {
         if (!isPressing || isAnimating) return;
         if (activePointerId !== null && e.pointerId !== activePointerId) return;
         releasePress(e);
     });
 
-    mascot.addEventListener('pointerleave', function() {
-        // ★ 已扩大判定范围：滑出橘子边界时不立即取消，交给 pointermove 的距离容差判断
-        if (activePointerId !== null) return;
-        if (isPressing) {
-            isPressing = false;
-            mascot.classList.remove('pressing');
-        }
-    });
+    // ★ 移除了 pointerleave 取消逻辑：滑出橘子范围不中断蓄力
+    // ★ 移除了 pointermove 距离判断：任意位置移动都不中断蓄力
 
     mascot.addEventListener('pointercancel', function(e) {
         cancelPress(e.pointerId);
@@ -545,7 +524,7 @@
         
         // 修改文字状态
         balanceTitle.classList.add('crit-text');
-        balanceTitle.innerText = "💥 被撞飞了！";
+        balanceTitle.innerText = "饿啊～～";
     }
 
     // 短按逻辑
