@@ -16,9 +16,9 @@
         /* ================= 优化后的筛选栏 ================= */
         .filter-bar { 
             display: flex; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            gap: 10px; 
+            flex-direction: column;
+            align-items: center;
+            gap: 12px; 
             margin-bottom: 15px; 
             background: white; 
             padding: 15px; 
@@ -26,12 +26,12 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.04); 
         }
         
-        /* 日期选择区（手机端占满第一行） */
+        /* 第一行：日期选择 */
         .date-inputs {
             display: flex;
             align-items: center;
             gap: 10px;
-            flex: 1 1 100%; /* 手机端强制占满一行 */
+            width: 100%;
             justify-content: center;
         }
         .date-inputs select { 
@@ -46,7 +46,45 @@
         }
         .date-inputs span { color: #86868b; font-size: 14px; }
 
-        /* 按钮区（手机端占满第二行，两个按钮并排） */
+        /* 第二行：新增的过滤选项 */
+        .extra-filters {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .pvs-check {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1d1d1f;
+            cursor: pointer;
+            user-select: none;
+        }
+        .pvs-check input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #007aff;
+        }
+
+        .keyword-select {
+            flex: 1;
+            max-width: 160px;
+            padding: 10px; 
+            border-radius: 8px; 
+            border: 1px solid #ccc; 
+            font-size: 14px; 
+            outline: none; 
+            background: #f5f5f7;
+        }
+
+        /* 第三行：按钮 */
         .action-buttons {
             display: flex;
             gap: 10px;
@@ -54,7 +92,7 @@
             justify-content: center;
         }
         .filter-btn, .reset-btn { 
-            flex: 1; /* 平分宽度 */
+            flex: 1; 
             max-width: 160px;
             padding: 10px 0; 
             border-radius: 8px; 
@@ -68,10 +106,11 @@
         .filter-btn:active { background: #005bb5; }
         .reset-btn { background: #e5e5ea; color: #1d1d1f; }
 
-        /* 电脑端宽屏适配：恢复成一行 */
-        @media (min-width: 550px) {
-            .filter-bar { flex-wrap: nowrap; }
-            .date-inputs { flex: 1 1 auto; }
+        /* 电脑端宽屏适配：全都放到一行 */
+        @media (min-width: 700px) {
+            .filter-bar { flex-direction: row; flex-wrap: nowrap; }
+            .date-inputs { width: auto; }
+            .extra-filters { width: auto; }
             .action-buttons { width: auto; }
             .filter-btn, .reset-btn { padding: 10px 20px; max-width: none; }
         }
@@ -96,13 +135,26 @@
         <h1>💸 扣款明细</h1>
     </div>
 
-    <!-- 优化后的日期查询筛选栏 -->
     <div class="filter-bar" id="filter-bar" style="display: none;">
+        <!-- 第一行：日期 -->
         <div class="date-inputs">
             <select id="start-date"></select>
             <span>至</span>
             <select id="end-date"></select>
         </div>
+        
+        <!-- 第二行：高级过滤 -->
+        <div class="extra-filters">
+            <label class="pvs-check">
+                <input type="checkbox" id="hide-pvs" onchange="filterExpenses()"> 不看PVS
+            </label>
+            <select id="keyword-filter" class="keyword-select" onchange="filterExpenses()">
+                <option value="">所有特定词条</option>
+                <!-- 动态生成 -->
+            </select>
+        </div>
+
+        <!-- 第三行：按钮 -->
         <div class="action-buttons">
             <button class="filter-btn" onclick="filterExpenses()">查询</button>
             <button class="reset-btn" onclick="resetExpenses()">重置</button>
@@ -137,11 +189,10 @@
         listEl.innerHTML = '';
 
         if (dataArray && dataArray.length > 0) {
-            // 强制降序排列（新日期在上）
             const sortedData = [...dataArray].sort((a, b) => {
                 const timeA = parseDateToTimestamp(a.date);
                 const timeB = parseDateToTimestamp(b.date);
-                return timeB - timeA; // 始终从大到小
+                return timeB - timeA; 
             });
 
             sortedData.forEach(item => {
@@ -160,15 +211,14 @@
         }
     }
 
-    // 初始化下拉框：日期选项必须是从旧到新
+    // 初始化下拉框
     function initSelectOptions() {
         const startSel = document.getElementById('start-date');
         const endSel = document.getElementById('end-date');
-        startSel.innerHTML = ''; endSel.innerHTML = '';
+        const keywordSel = document.getElementById('keyword-filter');
+        startSel.innerHTML = ''; endSel.innerHTML = ''; keywordSel.innerHTML = '<option value="">所有特定词条</option>';
 
-        // 提取所有不重复的日期
         const uniqueDates = [...new Set(globalExpenses.map(item => item.date))];
-        // 强制正序排列（老日期在上面）
         uniqueDates.sort((a, b) => parseDateToTimestamp(a) - parseDateToTimestamp(b));
 
         uniqueDates.forEach(date => {
@@ -176,11 +226,17 @@
             endSel.innerHTML += `<option value="${date}">${date}</option>`;
         });
 
-        // 默认起止日期选择最老和最新的一天
         if (uniqueDates.length > 0) {
             startSel.value = uniqueDates[0];
             endSel.value = uniqueDates[uniqueDates.length - 1];
         }
+
+        // 提取所有不重复的 Memo 词条，用于特定查询
+        const uniqueMemos = [...new Set(globalExpenses.map(item => item.memo))];
+        // 过滤掉空值和PVS相关的（如果你想在列表里也不显示PVS，可以在这里加逻辑）
+        uniqueMemos.filter(m => m && m.trim() !== "").forEach(memo => {
+            keywordSel.innerHTML += `<option value="${memo}">${memo}</option>`;
+        });
     }
 
     // 页面加载时拉取数据
@@ -191,7 +247,6 @@
                 globalExpenses = expenses;
                 document.getElementById('filter-bar').style.display = 'flex';
                 initSelectOptions();
-                // 默认展示全部，降序（最新的在上）
                 renderList(globalExpenses);
             } else {
                 document.getElementById('expense-list').innerHTML = '<li class="no-expense">近期无扣款记录，大王很节约～</li>';
@@ -201,32 +256,49 @@
             document.getElementById('expense-list').innerHTML = '<li class="no-expense">读取失败，请检查 expenses.json</li>';
         });
 
-    // 点击查询
+    // 核心过滤逻辑（集成了日期、PVS屏蔽、特定词条）
     function filterExpenses() {
         const startDate = document.getElementById('start-date').value;
         const endDate = document.getElementById('end-date').value;
-        
+        const hidePvs = document.getElementById('hide-pvs').checked;
+        const keyword = document.getElementById('keyword-filter').value;
+
         let startTs = parseDateToTimestamp(startDate);
         let endTs = parseDateToTimestamp(endDate);
 
-        // 防呆：如果起始日期大于结束日期，交换它们
         if (startTs > endTs) {
             [startTs, endTs] = [endTs, startTs];
         }
 
-        // 筛选出范围内的数据
         const filteredData = globalExpenses.filter(item => {
+            // 1. 日期过滤
             const ts = parseDateToTimestamp(item.date);
-            return ts >= startTs && ts <= endTs;
+            if (ts < startTs || ts > endTs) return false;
+
+            // 2. PVS 过滤 (不区分大小写)
+            if (hidePvs) {
+                const memoStr = (item.memo || "").toLowerCase();
+                if (memoStr.includes('pvs')) return false;
+            }
+
+            // 3. 特定词条过滤
+            if (keyword && item.memo !== keyword) return false;
+
+            return true;
         });
 
-        // 渲染查询结果（依然调用 renderList，内部会保持从新到旧）
         renderList(filteredData);
     }
 
     // 点击重置
     function resetExpenses() {
+        // 恢复默认日期选择
         initSelectOptions();
+        // 取消勾选PVS
+        document.getElementById('hide-pvs').checked = false;
+        // 词条恢复为全部
+        document.getElementById('keyword-filter').value = "";
+        
         // 恢复默认展示全部，从新到旧
         renderList(globalExpenses);
     }
