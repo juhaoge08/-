@@ -5,72 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>营业额与金额查询 - 旧店</title>
     <style>
-        /* ================= CSS 变量（用于深浅色主题） ================= */
-        :root {
-            --bg-color: #f5f5f7;
-            --text-color: #1d1d1f;
-            --card-bg: #ffffff;
-            --card-shadow: 0 8px 20px rgba(0,0,0,0.04);
-            --subtitle-color: #86868b;
-            --tips-color: #a1a1a6;
-            --btn-bg: #e5e5ea;
-            --btn-text: #1d1d1f;
-        }
-
-        /* 深色模式变量 */
-        [data-theme="dark"] {
-            --bg-color: #000000;
-            --text-color: #f5f5f7;
-            --card-bg: #1c1c1e;
-            --card-shadow: 0 8px 20px rgba(255,255,255,0.05);
-            --subtitle-color: #a1a1a6;
-            --tips-color: #636366;
-            --btn-bg: #2c2c2e;
-            --btn-text: #f5f5f7;
-        }
-
         * { box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: var(--bg-color); 
-            color: var(--text-color); 
-            padding: 15px; margin: 0; 
-            display: flex; flex-direction: column; align-items: center; min-height: 100vh; 
-            overflow-x: hidden; 
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        /* 顶部主题切换按钮 */
-        .theme-toggle {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: var(--card-bg);
-            color: var(--text-color);
-            border: none;
-            padding: 8px 12px;
-            border-radius: 20px;
-            box-shadow: var(--card-shadow);
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        /* ================= 雪花 Canvas ================= */
-        #snow-canvas {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; /* 关键：让点击穿透雪花 */
-            z-index: 9998; /* 在卡片和按钮前面 */
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
         
         /* 顶部余额卡片 */
         .top-balance { 
-            background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 50px; margin-bottom: 30px; position: relative; 
+            background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 10px; margin-bottom: 30px; position: relative; 
         }
         .top-balance p { margin: 0; font-size: 14px; opacity: 0.9; letter-spacing: 1px; transition: color 0.3s; }
         .top-balance p.crit-text { color: #ff3b30; font-weight: bold; opacity: 1; }
@@ -82,22 +22,25 @@
         .top-balance.smashed {
             animation: collapseCard 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
             border: 3px solid #ff3b30;
-            box-shadow: 0 20px 50px rgba(255, 59, 48, 0.5);
-            z-index: 1;
+            box-shadow: 0 20px 50px rgba(255, 59, 48, 0.5); /* 撞击后的红晕 */
+            z-index: 1; /* 让橘子能在它之上穿模飞过 */
         }
+        
+        /* 撞击瞬间卡片内文字的震动 */
         .top-balance.smashed h2, .top-balance.smashed p {
             transform: rotate(-6deg) scale(0.95);
             transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
+
         @keyframes collapseCard {
             0% { transform: rotate(0deg) translate(0, 0) scale(1); }
-            15% { transform: rotate(-8deg) translate(-15px, -20px) scale(1.1, 0.8); }
-            40% { transform: rotate(18deg) translate(25px, 40px) scale(0.95, 1.05); }
-            70% { transform: rotate(8deg) translate(15px, 25px) scale(1.02, 0.98); }
-            100% { transform: rotate(12deg) translate(15px, 35px) scale(1); }
+            15% { transform: rotate(-8deg) translate(-15px, -20px) scale(1.1, 0.8); } /* 受到剧烈撞击，向上凹陷 */
+            40% { transform: rotate(18deg) translate(25px, 40px) scale(0.95, 1.05); } /* 坍塌倾斜 */
+            70% { transform: rotate(8deg) translate(15px, 25px) scale(1.02, 0.98); } /* 弹性回弹 */
+            100% { transform: rotate(12deg) translate(15px, 35px) scale(1); } /* 最终坏掉的定格状态 */
         }
 
-        /* 震动动画 */
+        /* 震动动画 (用于普通暴击扣款) */
         @keyframes shake {
             0% { transform: translate(1px, 1px) rotate(0deg); }
             10% { transform: translate(-3px, -2px) rotate(-1deg); }
@@ -114,22 +57,19 @@
         .shake { animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) both; }
 
         .menu-container { width: 100%; max-width: 600px; text-align: center; }
-        h1 { font-size: 22px; margin-bottom: 25px; color: var(--text-color); }
+        h1 { font-size: 22px; margin-bottom: 25px; color: #1d1d1f; }
         
         /* 按钮列表 */
         .menu-grid { display: flex; gap: 15px; justify-content: center; flex-direction: column; }
-        .menu-card { 
-            background: var(--card-bg); width: 100%; padding: 20px; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-decoration: none; 
-            color: var(--text-color); box-shadow: var(--card-shadow); transition: all 0.2s ease; border: 2px solid transparent; 
-        }
-        .menu-card:active { transform: scale(0.98); }
+        .menu-card { background: white; width: 100%; padding: 20px; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-decoration: none; color: #1d1d1f; box-shadow: 0 8px 20px rgba(0,0,0,0.04); transition: all 0.2s ease; border: 2px solid transparent; }
+        .menu-card:active { transform: scale(0.98); background: #fafafa; }
         .icon { font-size: 35px; margin-bottom: 8px; }
         .title { font-size: 18px; font-weight: 600; }
-        .subtitle { font-size: 13px; color: var(--subtitle-color); margin-top: 5px; }
+        .subtitle { font-size: 13px; color: #86868b; margin-top: 5px; }
 
-        .tips-text { color: var(--tips-color); font-size: 13px; margin-top: 30px; letter-spacing: 1px; }
+        .tips-text { color: #a1a1a6; font-size: 13px; margin-top: 30px; letter-spacing: 1px; }
 
-        /* ================= 悬浮窗圣诞树与气泡 ================= */
+        /* ================= 悬浮窗橘子与气泡 ================= */
         .floating-mascot-container { position: fixed; bottom: 30px; right: 20px; z-index: 9999; }
         
         .mascot { 
@@ -143,6 +83,7 @@
             transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.1s ease; 
         }
         
+        /* 短按按住时的压扁反馈 */
         .mascot.pressing {
             transform: scale(1.3, 0.6) translateY(15px); 
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); 
@@ -194,12 +135,6 @@
 </head>
 <body>
 
-<!-- 满屏雪花 Canvas -->
-<canvas id="snow-canvas"></canvas>
-
-<!-- 主题切换按钮 -->
-<button class="theme-toggle" id="theme-toggle" onclick="cycleTheme()">🌗 跟随系统</button>
-
 <audio id="soundPress" src="Ya1.mp3" preload="auto"></audio>
 <audio id="soundRelease" src="Ya2.mp3" preload="auto"></audio>
 
@@ -233,117 +168,11 @@
 </div>
 
 <div class="floating-mascot-container">
-    <div class="speech-bubble" id="speechBubble">圣诞快乐！</div>
-    <!-- 橘子换成了圣诞树 -->
-    <div class="mascot" id="magic-mascot">🎄</div>
+    <div class="speech-bubble" id="speechBubble">今天辛苦啦！</div>
+    <div class="mascot" id="magic-mascot">🍊</div>
 </div>
 
 <script>
-    // ================= 1. 深色模式主题切换逻辑 =================
-    const themeToggleBtn = document.getElementById('theme-toggle');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    // 三种状态：'system', 'light', 'dark'
-    let currentThemeMode = localStorage.getItem('theme-mode') || 'system';
-
-    function applyTheme() {
-        if (currentThemeMode === 'system') {
-            if (prefersDark.matches) {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                themeToggleBtn.innerText = '🌗 跟随系统 (深)';
-            } else {
-                document.documentElement.removeAttribute('data-theme');
-                themeToggleBtn.innerText = '🌗 跟随系统 (浅)';
-            }
-        } else if (currentThemeMode === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            themeToggleBtn.innerText = '🌙 深色模式';
-        } else {
-            document.documentElement.removeAttribute('data-theme');
-            themeToggleBtn.innerText = '☀️ 浅色模式';
-        }
-    }
-
-    function cycleTheme() {
-        if (currentThemeMode === 'system') currentThemeMode = 'light';
-        else if (currentThemeMode === 'light') currentThemeMode = 'dark';
-        else currentThemeMode = 'system';
-        
-        localStorage.setItem('theme-mode', currentThemeMode);
-        applyTheme();
-    }
-
-    // 监听系统主题变化
-    prefersDark.addEventListener('change', () => {
-        if (currentThemeMode === 'system') applyTheme();
-    });
-
-    // 初始化主题
-    applyTheme();
-
-
-    // ================= 2. 飘雪粒子特效 =================
-    const canvas = document.getElementById('snow-canvas');
-    const ctx = canvas.getContext('2d');
-    let width, height;
-    let snowflakes = [];
-
-    function resizeCanvas() {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvas.width = width;
-        canvas.height = height;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    // 创建雪花
-    for (let i = 0; i < 150; i++) {
-        snowflakes.push({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            radius: Math.random() * 3 + 1, // 雪花大小 1~4px
-            speedY: Math.random() * 1 + 0.5, // 下落速度
-            speedX: Math.random() * 1 - 0.5, // 左右摇摆
-            opacity: Math.random() * 0.5 + 0.3 // 透明度
-        });
-    }
-
-    function drawSnow() {
-        ctx.clearRect(0, 0, width, height);
-        
-        snowflakes.forEach(flake => {
-            ctx.beginPath();
-            ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 255, 255, ${flake.opacity})`;
-            // 加一点发光效果，更明显
-            ctx.shadowBlur = 5;
-            ctx.shadowColor = "white";
-            ctx.fill();
-            ctx.closePath();
-
-            // 更新位置
-            flake.y += flake.speedY;
-            flake.x += flake.speedX;
-
-            // 左右摇摆的随机性
-            flake.speedX += (Math.random() - 0.5) * 0.05;
-            if (flake.speedX > 1) flake.speedX = 1;
-            if (flake.speedX < -1) flake.speedX = -1;
-
-            // 如果落到屏幕底部，重置到顶部
-            if (flake.y > height) {
-                flake.y = -10;
-                flake.x = Math.random() * width;
-            }
-        });
-        
-        requestAnimationFrame(drawSnow);
-    }
-    drawSnow();
-
-
-    // ================= 3. 主页原有逻辑 =================
     let currentBalance = 0; 
     const balanceText = document.getElementById('home-balance');
     const balanceCard = document.getElementById('balance-card');
@@ -352,6 +181,7 @@
     const soundPress = document.getElementById('soundPress');
     const soundRelease = document.getElementById('soundRelease');
 
+    // 手机端音频预解锁
     window.addEventListener('touchstart', function unlockAudio() {
         soundPress.play().then(() => { soundPress.pause(); soundPress.currentTime = 0; }).catch(()=>{});
         soundRelease.play().then(() => { soundRelease.pause(); soundRelease.currentTime = 0; }).catch(()=>{});
@@ -492,74 +322,127 @@
     });
 
 
-    // ================= 4. 圣诞树长按物理跳跃系统 =================
+    // ================= 橘子长按物理跳跃系统 =================
     const mascot = document.getElementById('magic-mascot');
     const bubble = document.getElementById('speechBubble');
     let bubbleTimeout;
 
-    const mascotQuotes = [
-        "圣诞快乐！祝你大卖！",
+    const orangeQuotes = [
+        "今天辛苦啦！记得对账哦～",
         "别点我了！",
-        "我要去送礼物了...",
+        "我要睡觉...",
         "今天赚大钱了吗？",
         "花了我一块钱，心疼...",
-        "要不要来杯热红酒？",
+        "要不要来杯下午茶？",
         "生意兴隆，财源广进！"
     ];
 
     let pressStartTime = 0;
     let isPressing = false;
     let isAnimating = false;
-    let hasSmashed = false; 
+    let hasSmashed = false; // 记录是否已经撞毁过卡片，防止重复触发
+
+    // ★ 新增：长按容错半径（像素）。手指/鼠标在这个范围内轻微滑动不会中断蓄力
+    const PRESS_TOLERANCE = 80;
+    let pressStartX = 0;
+    let pressStartY = 0;
+    let activePointerId = null;
 
     mascot.addEventListener('pointerdown', function(e) {
         if (isAnimating) return;
         isPressing = true;
         pressStartTime = Date.now();
+        pressStartX = e.clientX;
+        pressStartY = e.clientY;
+        activePointerId = e.pointerId;
+        // ★ 新增：捕获指针，滑出橘子本身范围后依然能收到 pointermove / pointerup
+        try { mascot.setPointerCapture(e.pointerId); } catch (err) {}
         mascot.classList.add('pressing');
         mascot.style.transition = ''; 
         mascot.style.transform = '';  
         playAudio(soundPress); 
     });
 
-    mascot.addEventListener('pointerup', function(e) {
+    // ★ 新增：统一释放逻辑
+    function releasePress(e) {
         if (!isPressing || isAnimating) return;
         isPressing = false;
-        
+        const pointerId = e.pointerId;
+        activePointerId = null;
+        try { mascot.releasePointerCapture(pointerId); } catch (err) {}
         mascot.classList.remove('pressing');
 
         const duration = Date.now() - pressStartTime;
 
         if (duration < 2000) {
+            // 短按（<2秒）
             playAudio(soundRelease);
             executeMascotClick();
         } else if (duration < 8000) {
+            // 长按跳跃（2-8秒）
             mascot.style.transform = 'translateY(0px)'; 
             const jumpHeight = 100 + ((duration - 2000) / 6000) * 400; 
             performJump(jumpHeight, false);
         } else {
+            // 超级跳（>=8秒）
             mascot.style.transform = 'translateY(0px)';
             performJump(0, true);
         }
+    }
+
+    // ★ 新增：取消蓄力逻辑
+    function cancelPress(pointerId) {
+        if (!isPressing) return;
+        isPressing = false;
+        activePointerId = null;
+        mascot.classList.remove('pressing');
+        if (pointerId !== undefined && pointerId !== null) {
+            try { mascot.releasePointerCapture(pointerId); } catch (err) {}
+        }
+    }
+
+    // ★ 新增：全局 pointermove 判断滑动距离，超过容错半径才取消蓄力
+    document.addEventListener('pointermove', function(e) {
+        if (!isPressing || isAnimating) return;
+        if (activePointerId !== null && e.pointerId !== activePointerId) return;
+        const dx = e.clientX - pressStartX;
+        const dy = e.clientY - pressStartY;
+        if (Math.sqrt(dx * dx + dy * dy) > PRESS_TOLERANCE) {
+            cancelPress(e.pointerId);
+        }
+    }, { passive: true });
+
+    // ★ 新增：全局 pointerup 兜底，手指/鼠标在橘子外松开也能正常释放
+    document.addEventListener('pointerup', function(e) {
+        if (!isPressing || isAnimating) return;
+        if (activePointerId !== null && e.pointerId !== activePointerId) return;
+        releasePress(e);
+    });
+
+    mascot.addEventListener('pointerup', function(e) {
+        if (!isPressing || isAnimating) return;
+        if (activePointerId !== null && e.pointerId !== activePointerId) return;
+        releasePress(e);
     });
 
     mascot.addEventListener('pointerleave', function() {
-        if(isPressing) {
-            isPressing = false;
-            mascot.classList.remove('pressing');
-        }
-    });
-    mascot.addEventListener('pointercancel', function() {
-        if(isPressing) {
+        // ★ 已扩大判定范围：滑出橘子边界时不立即取消，交给 pointermove 的距离容差判断
+        if (activePointerId !== null) return;
+        if (isPressing) {
             isPressing = false;
             mascot.classList.remove('pressing');
         }
     });
 
+    mascot.addEventListener('pointercancel', function(e) {
+        cancelPress(e.pointerId);
+    });
+
+    // 物理跳跃引擎
     function performJump(maxHeight, isSuper) {
         isAnimating = true;
         const startTime = performance.now();
-        const g = 2500; 
+        const g = 2500; // 像素/秒^2 的重力加速度
         
         mascot.style.transition = 'none';
 
@@ -572,6 +455,7 @@
         let hitY = 0;
 
         if (isSuper) {
+            // 超级跳需要足够的初速度冲破屏幕
             const neededHeight = hitDistance + window.innerHeight * 0.8;
             v0 = Math.sqrt(2 * g * neededHeight) + 100; 
         } else {
@@ -582,24 +466,29 @@
             const elapsed = currentTime - startTime;
             const t = elapsed / 1000;
 
+            // 如果已经撞击过，橘子进入“穿越飞行”状态
             if (isSuper && hasSmashed) {
                 const timeSinceHit = currentTime - hitTime;
-                const flySpeed = 1.2; 
+                const flySpeed = 1.2; // 穿模飞出的速度 (像素/毫秒)
                 const flyY = hitY + (timeSinceHit * flySpeed);
                 
+                // 如果橘子完全飞出了屏幕顶部
                 if (-flyY + mascotRect.top < -150) {
                     mascot.style.display = 'none';
                     isAnimating = false;
                     return; 
                 }
                 
+                // 带着惯性继续往上冲，并疯狂旋转
                 mascot.style.transform = `translateY(${-flyY}px) rotate(${(timeSinceHit / 3) % 360}deg)`;
                 requestAnimationFrame(animate);
                 return;
             }
 
+            // 正常的抛物线物理
             let y = v0 * t - 0.5 * g * t * t;
             
+            // 如果是超级跳，且刚好碰触到卡片
             if (isSuper && y >= hitDistance) {
                 hasSmashed = true;
                 hitTime = currentTime;
@@ -609,15 +498,17 @@
                 return;
             }
 
+            // 普通跳跃落地
             if (!isSuper && y < 0) {
                 mascot.style.transform = `translateY(0px)`;
                 triggerLanding();
                 return;
             }
 
+            // 旋转特效
             let rotation = 0;
             if (isSuper) {
-                rotation = (elapsed / 10) % 360; 
+                rotation = (elapsed / 10) % 360; // 上升时缓慢自转
             } else {
                 rotation = y * 0.1; 
             }
@@ -629,6 +520,7 @@
         requestAnimationFrame(animate);
     }
 
+    // 落地动画（原地压扁再恢复）
     function triggerLanding() {
         mascot.style.transform = `scale(1.4, 0.5) translateY(15px)`;
         playAudio(soundRelease);
@@ -644,13 +536,19 @@
         }, 100);
     }
 
+    // 撞击卡片动画（卡片坍塌）
     function triggerSmash() {
-        playAudio(soundPress); 
+        playAudio(soundPress); // 撞击音效
+        
+        // 添加坍塌动画类
         balanceCard.classList.add('smashed');
+        
+        // 修改文字状态
         balanceTitle.classList.add('crit-text');
         balanceTitle.innerText = "💥 被撞飞了！";
     }
 
+    // 短按逻辑
     function executeMascotClick() {
         if (currentBalance > 0) {
             currentBalance -= 1;
@@ -668,7 +566,7 @@
         document.body.appendChild(minusOne);
         setTimeout(() => { minusOne.remove(); }, 800);
 
-        const randomQuote = mascotQuotes[Math.floor(Math.random() * mascotQuotes.length)];
+        const randomQuote = orangeQuotes[Math.floor(Math.random() * orangeQuotes.length)];
         bubble.innerText = randomQuote;
         bubble.classList.add('show');
         clearTimeout(bubbleTimeout);
