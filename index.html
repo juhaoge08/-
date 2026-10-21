@@ -22,11 +22,10 @@
         .top-balance.smashed {
             animation: collapseCard 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
             border: 3px solid #ff3b30;
-            box-shadow: 0 20px 50px rgba(255, 59, 48, 0.5); /* 撞击后的红晕 */
-            z-index: 1; /* 让橘子能在它之上穿模飞过 */
+            box-shadow: 0 20px 50px rgba(255, 59, 48, 0.5); 
+            z-index: 1; 
         }
         
-        /* 撞击瞬间卡片内文字的震动 */
         .top-balance.smashed h2, .top-balance.smashed p {
             transform: rotate(-6deg) scale(0.95);
             transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -34,13 +33,45 @@
 
         @keyframes collapseCard {
             0% { transform: rotate(0deg) translate(0, 0) scale(1); }
-            15% { transform: rotate(-8deg) translate(-15px, -20px) scale(1.1, 0.8); } /* 受到剧烈撞击，向上凹陷 */
-            40% { transform: rotate(18deg) translate(25px, 40px) scale(0.95, 1.05); } /* 坍塌倾斜 */
-            70% { transform: rotate(8deg) translate(15px, 25px) scale(1.02, 0.98); } /* 弹性回弹 */
-            100% { transform: rotate(12deg) translate(15px, 35px) scale(1); } /* 最终坏掉的定格状态 */
+            15% { transform: rotate(-8deg) translate(-15px, -20px) scale(1.1, 0.8); }
+            40% { transform: rotate(18deg) translate(25px, 40px) scale(0.95, 1.05); }
+            70% { transform: rotate(8deg) translate(15px, 25px) scale(1.02, 0.98); }
+            100% { transform: rotate(12deg) translate(15px, 35px) scale(1); }
         }
 
-        /* 震动动画 (用于普通暴击扣款) */
+        /* ================= 新增：裂痕特效 ================= */
+        .card-crack {
+            position: absolute;
+            top: -3px; left: -3px; right: -3px; bottom: -3px;
+            border-radius: 20px;
+            pointer-events: none;
+            /* 用 SVG 画出的龟裂纹理 */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M50 0 L45 30 L65 50 L40 70 L55 100' stroke='%23333' stroke-width='2' fill='none' opacity='0.6'/%3E%3Cpath d='M45 30 L20 40' stroke='%23333' stroke-width='1.5' fill='none' opacity='0.5'/%3E%3Cpath d='M60 50 L85 45' stroke='%23333' stroke-width='2' fill='none' opacity='0.6'/%3E%3Cpath d='M40 70 L15 85' stroke='%23333' stroke-width='1.5' fill='none' opacity='0.4'/%3E%3Cpath d='M45 30 L35 0' stroke='%23333' stroke-width='1' fill='none' opacity='0.4'/%3E%3C/svg%3E");
+            background-size: cover;
+            animation: crackAppear 0.3s ease-out forwards;
+        }
+
+        @keyframes crackAppear {
+            0% { opacity: 0; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* ================= 新增：金钱掉落粒子 ================= */
+        .money-particle {
+            position: fixed;
+            font-size: 24px;
+            pointer-events: none;
+            z-index: 9999;
+            animation: fallAndFade 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        @keyframes fallAndFade {
+            0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg) scale(0.5); opacity: 0; }
+        }
+
+        /* 震动动画 */
         @keyframes shake {
             0% { transform: translate(1px, 1px) rotate(0deg); }
             10% { transform: translate(-3px, -2px) rotate(-1deg); }
@@ -83,7 +114,6 @@
             transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.1s ease; 
         }
         
-        /* 短按按住时的压扁反馈 */
         .mascot.pressing {
             transform: scale(1.3, 0.6) translateY(15px); 
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); 
@@ -340,17 +370,15 @@
     let pressStartTime = 0;
     let isPressing = false;
     let isAnimating = false;
-    let hasSmashed = false; // 记录是否已经撞毁过卡片，防止重复触发
-
-    // ★ 全屏长按：只要按住橘子，任意位置移动都不取消，直到松手
+    let hasSmashed = false; 
     let activePointerId = null;
+    let moneyDropInterval = null; // 用于控制金钱掉落和扣钱的定时器
 
     mascot.addEventListener('pointerdown', function(e) {
-        if (isAnimating) return;
+        if (isAnimating || hasSmashed) return; // 撞坏后就不能再点了
         isPressing = true;
         pressStartTime = Date.now();
         activePointerId = e.pointerId;
-        // ★ 捕获指针：滑出橘子范围甚至滑出屏幕内区域，依然能收到 pointerup
         try { mascot.setPointerCapture(e.pointerId); } catch (err) {}
         mascot.classList.add('pressing');
         mascot.style.transition = ''; 
@@ -358,9 +386,8 @@
         playAudio(soundPress); 
     });
 
-    // ★ 统一的释放逻辑（松手才触发判定）
     function releasePress(e) {
-        if (!isPressing || isAnimating) return;
+        if (!isPressing || isAnimating || hasSmashed) return;
         isPressing = false;
         const pointerId = e.pointerId;
         activePointerId = null;
@@ -370,22 +397,18 @@
         const duration = Date.now() - pressStartTime;
 
         if (duration < 2000) {
-            // 短按（<2秒）
             playAudio(soundRelease);
             executeMascotClick();
         } else if (duration < 8000) {
-            // 长按跳跃（2-8秒）
             mascot.style.transform = 'translateY(0px)'; 
             const jumpHeight = 100 + ((duration - 2000) / 6000) * 400; 
             performJump(jumpHeight, false);
         } else {
-            // 超级跳（>=8秒）
             mascot.style.transform = 'translateY(0px)';
             performJump(0, true);
         }
     }
 
-    // ★ 取消蓄力（仅浏览器意外中断时才走这里，例如来电、系统弹窗）
     function cancelPress(pointerId) {
         if (!isPressing) return;
         isPressing = false;
@@ -396,22 +419,17 @@
         }
     }
 
-    // ★ 全局 pointerup：无论手指/鼠标移动到屏幕哪个角落，松手都会触发
     document.addEventListener('pointerup', function(e) {
-        if (!isPressing || isAnimating) return;
+        if (!isPressing || isAnimating || hasSmashed) return;
         if (activePointerId !== null && e.pointerId !== activePointerId) return;
         releasePress(e);
     });
 
-    // 橘子自身 pointerup（保证与全局监听兼容，内部有 isPressing 去重）
     mascot.addEventListener('pointerup', function(e) {
-        if (!isPressing || isAnimating) return;
+        if (!isPressing || isAnimating || hasSmashed) return;
         if (activePointerId !== null && e.pointerId !== activePointerId) return;
         releasePress(e);
     });
-
-    // ★ 移除了 pointerleave 取消逻辑：滑出橘子范围不中断蓄力
-    // ★ 移除了 pointermove 距离判断：任意位置移动都不中断蓄力
 
     mascot.addEventListener('pointercancel', function(e) {
         cancelPress(e.pointerId);
@@ -421,7 +439,7 @@
     function performJump(maxHeight, isSuper) {
         isAnimating = true;
         const startTime = performance.now();
-        const g = 2500; // 像素/秒^2 的重力加速度
+        const g = 2500; 
         
         mascot.style.transition = 'none';
 
@@ -434,7 +452,6 @@
         let hitY = 0;
 
         if (isSuper) {
-            // 超级跳需要足够的初速度冲破屏幕
             const neededHeight = hitDistance + window.innerHeight * 0.8;
             v0 = Math.sqrt(2 * g * neededHeight) + 100; 
         } else {
@@ -445,29 +462,24 @@
             const elapsed = currentTime - startTime;
             const t = elapsed / 1000;
 
-            // 如果已经撞击过，橘子进入“穿越飞行”状态
             if (isSuper && hasSmashed) {
                 const timeSinceHit = currentTime - hitTime;
-                const flySpeed = 1.2; // 穿模飞出的速度 (像素/毫秒)
+                const flySpeed = 1.2; 
                 const flyY = hitY + (timeSinceHit * flySpeed);
                 
-                // 如果橘子完全飞出了屏幕顶部
                 if (-flyY + mascotRect.top < -150) {
                     mascot.style.display = 'none';
                     isAnimating = false;
                     return; 
                 }
                 
-                // 带着惯性继续往上冲，并疯狂旋转
                 mascot.style.transform = `translateY(${-flyY}px) rotate(${(timeSinceHit / 3) % 360}deg)`;
                 requestAnimationFrame(animate);
                 return;
             }
 
-            // 正常的抛物线物理
             let y = v0 * t - 0.5 * g * t * t;
             
-            // 如果是超级跳，且刚好碰触到卡片
             if (isSuper && y >= hitDistance) {
                 hasSmashed = true;
                 hitTime = currentTime;
@@ -477,17 +489,15 @@
                 return;
             }
 
-            // 普通跳跃落地
             if (!isSuper && y < 0) {
                 mascot.style.transform = `translateY(0px)`;
                 triggerLanding();
                 return;
             }
 
-            // 旋转特效
             let rotation = 0;
             if (isSuper) {
-                rotation = (elapsed / 10) % 360; // 上升时缓慢自转
+                rotation = (elapsed / 10) % 360; 
             } else {
                 rotation = y * 0.1; 
             }
@@ -499,7 +509,7 @@
         requestAnimationFrame(animate);
     }
 
-    // 落地动画（原地压扁再恢复）
+    // 落地动画
     function triggerLanding() {
         mascot.style.transform = `scale(1.4, 0.5) translateY(15px)`;
         playAudio(soundRelease);
@@ -515,16 +525,75 @@
         }, 100);
     }
 
-    // 撞击卡片动画（卡片坍塌）
+    // ================= 撞毁卡片、裂痕、金钱掉落、扣钱 =================
     function triggerSmash() {
-        playAudio(soundPress); // 撞击音效
+        playAudio(soundPress); 
         
-        // 添加坍塌动画类
         balanceCard.classList.add('smashed');
         
-        // 修改文字状态
         balanceTitle.classList.add('crit-text');
         balanceTitle.innerText = "饿啊～～";
+
+        // 1. 添加裂痕
+        const crack = document.createElement('div');
+        crack.className = 'card-crack';
+        balanceCard.appendChild(crack);
+
+        // 2. 开启持续掉落金钱粒子和每秒扣款
+        startMoneyDrain();
+    }
+
+    function startMoneyDrain() {
+        // 立即开启定时器，每 1000 毫秒（1秒）执行一次
+        moneyDropInterval = setInterval(() => {
+            // 如果余额还有钱，继续掉
+            if (currentBalance > 0) {
+                // 扣1块钱
+                currentBalance -= 1;
+                balanceText.innerText = '$' + currentBalance.toLocaleString();
+                
+                // 余额数字抖动一下
+                balanceText.classList.add('pop');
+                setTimeout(() => { balanceText.classList.remove('pop'); }, 100);
+
+                // 生成 1-3 个金钱粒子
+                const particleCount = Math.floor(Math.random() * 3) + 1;
+                for (let i = 0; i < particleCount; i++) {
+                    spawnMoneyParticle();
+                }
+            } else {
+                // 没钱了，停止掉落和扣款
+                clearInterval(moneyDropInterval);
+            }
+        }, 1000);
+    }
+
+    // 生成单个金钱粒子的函数
+    function spawnMoneyParticle() {
+        const money = document.createElement('div');
+        money.className = 'money-particle';
+        // 随机使用金币、钞票或绿色美元符号
+        const icons = ['🪙', '💵', '💸', '🟢'];
+        money.innerText = icons[Math.floor(Math.random() * icons.length)];
+        
+        // 随机获取当前卡片位置，让金钱从卡片附近掉出来
+        const rect = balanceCard.getBoundingClientRect();
+        const startX = rect.left + Math.random() * rect.width;
+        const startY = rect.top + Math.random() * 50; // 在卡片上半部分随机位置
+
+        money.style.left = startX + 'px';
+        money.style.top = startY + 'px';
+        
+        // 随机大小
+        const size = 16 + Math.random() * 20;
+        money.style.fontSize = size + 'px';
+
+        document.body.appendChild(money);
+
+        // 2秒后自动销毁这个粒子元素
+        setTimeout(() => {
+            money.remove();
+        }, 2000);
     }
 
     // 短按逻辑
