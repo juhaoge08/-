@@ -134,6 +134,19 @@
         return null;
     }
 
+    // ★ 新增：格式化日期显示（今年不显示年份，往年显示年份）
+    function formatDateForDisplay(dateStr) {
+        const dateObj = parseDateToObj(dateStr);
+        if (!dateObj) return dateStr;
+        
+        const currentYear = new Date().getFullYear();
+        if (dateObj.year === currentYear) {
+            return `${dateObj.month + 1}月${dateObj.day}日`;
+        } else {
+            return `${dateObj.year}年${dateObj.month + 1}月${dateObj.day}日`;
+        }
+    }
+
     // 渲染日历
     function renderCalendar() {
         const year = currentCalDate.getFullYear();
@@ -194,17 +207,25 @@
             startSel.innerHTML = ''; endSel.innerHTML = '';
 
             globalData.forEach(item => {
-                startSel.innerHTML += `<option value="${item.date}">${item.date}</option>`;
-                endSel.innerHTML += `<option value="${item.date}">${item.date}</option>`;
+                // ★ 下拉框的值保留原样，但显示的文字应用智能格式化
+                const displayDate = formatDateForDisplay(item.date);
+                startSel.innerHTML += `<option value="${item.date}">${displayDate}</option>`;
+                endSel.innerHTML += `<option value="${item.date}">${displayDate}</option>`;
             });
 
             const today = new Date();
-            const currentMonthStr = (today.getMonth() + 1) + '月';
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth(); // 0-11
 
-            let monthData = globalData.filter(item => item.date.startsWith(currentMonthStr));
+            // ★ 核心修改：本月筛选必须同时匹配年份和月份
+            let monthData = globalData.filter(item => {
+                const dObj = parseDateToObj(item.date);
+                return dObj && dObj.year === currentYear && dObj.month === currentMonth;
+            });
+
             let defaultStartDate, defaultEndDate;
 
-            // 【核心修改】只要有本月数据，就默认显示本月1号到最后一天，不再跳过昨天
+            // 如果有本月数据，默认显示本月首尾
             if (monthData.length > 0) {
                 defaultStartDate = monthData[0].date;
                 defaultEndDate = monthData[monthData.length - 1].date;
@@ -266,7 +287,8 @@
     }
 
     function renderHistoryChart(dataArray) {
-        const labels = dataArray.map(item => item.date);
+        // ★ 图表 X 轴标签应用智能格式化
+        const labels = dataArray.map(item => formatDateForDisplay(item.date));
         const revenues = dataArray.map(item => item.revenue);
         const maxRev = Math.max(...revenues);
         const minRev = Math.min(...revenues);
