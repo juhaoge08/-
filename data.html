@@ -268,7 +268,31 @@
     let globalData = []; 
     const statsDisplay = document.getElementById('stats-display');
 
-    // 只保留营业额的数字滚动，删除了余额的滚动
+    // ★ 新增：解析日期字符串（兼容带年份和不带年份）
+    function parseDate(dateStr) {
+        const match = dateStr.match(/(?:(\d+)年)?(\d+)月(\d+)日/);
+        if (match) {
+            const year = match[1] ? Number(match[1]) : new Date().getFullYear();
+            const month = Number(match[2]);
+            const day = Number(match[3]);
+            return { year, month, day };
+        }
+        return null;
+    }
+
+    // ★ 新增：格式化日期显示（今年不显示年份，往年显示年份）
+    function formatDateForDisplay(dateStr) {
+        const dateObj = parseDate(dateStr);
+        if (!dateObj) return dateStr;
+        
+        const currentYear = new Date().getFullYear();
+        if (dateObj.year === currentYear) {
+            return `${dateObj.month}月${dateObj.day}日`;
+        } else {
+            return `${dateObj.year}年${dateObj.month}月${dateObj.day}日`;
+        }
+    }
+
     function animateValue(id, start, end, duration) {
         const obj = document.getElementById(id);
         let startTimestamp = null;
@@ -283,13 +307,13 @@
         window.requestAnimationFrame(step);
     }
 
+    // 计算昨天的年月日
     const today = new Date();
     let yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-    const yMonth = (yesterday.getMonth() + 1) + '月';
-    const yDay = yesterday.getDate() + '日';
-    const yesterdayStr = yMonth + yDay;
-    const currentMonthStr = (today.getMonth() + 1) + '月';
+    const yYear = yesterday.getFullYear();
+    const yMonth = yesterday.getMonth() + 1;
+    const yDay = yesterday.getDate();
 
     fetch('data.json')
         .then(response => response.json())
@@ -301,9 +325,10 @@
             
             globalData = data;
             const latestDay = data[data.length - 1];
+            const latestDayObj = parseDate(latestDay.date);
 
-            // 校验是否昨天
-            if (latestDay.date !== yesterdayStr) {
+            // ★ 核心修改：严格的年月日昨日校验
+            if (!latestDayObj || latestDayObj.year !== yYear || latestDayObj.month !== yMonth || latestDayObj.day !== yDay) {
                 document.getElementById('empty-state').style.display = 'block';
                 return; 
             }
@@ -311,8 +336,8 @@
             document.getElementById('empty-state').style.display = 'none';
             document.getElementById('data-content').style.display = 'block';
 
-            document.getElementById('kpi-date-title').innerText = latestDay.date + ' 营业额';
-            // 只调用一次营业额动画
+            // 标题应用智能格式化
+            document.getElementById('kpi-date-title').innerText = formatDateForDisplay(latestDay.date) + ' 营业额';
             animateValue("total-amount", 0, Number(latestDay.revenue), 1500);
 
             initSelectOptions();
@@ -327,9 +352,10 @@
         const sel2 = document.getElementById('date-select-2');
         sel1.innerHTML = ''; sel2.innerHTML = '';
         for (let i = globalData.length - 1; i >= 0; i--) {
-            const date = globalData[i].date;
-            sel1.innerHTML += `<option value="${date}">${date}</option>`;
-            sel2.innerHTML += `<option value="${date}">${date}</option>`;
+            const rawDate = globalData[i].date;
+            const displayDate = formatDateForDisplay(rawDate);
+            sel1.innerHTML += `<option value="${rawDate}">${displayDate}</option>`;
+            sel2.innerHTML += `<option value="${rawDate}">${displayDate}</option>`;
         }
         if (globalData.length >= 2) { sel1.selectedIndex = 1; sel2.selectedIndex = 0; }
     }
@@ -349,7 +375,11 @@
             chartData = globalData.slice(-7);
             updateStats(chartData, '近7日');
         } else if (type === 'month') {
-            chartData = globalData.filter(item => item.date.startsWith(currentMonthStr));
+            // ★ 本月的筛选，严格校验年份和月份
+            chartData = globalData.filter(item => {
+                const dObj = parseDate(item.date);
+                return dObj && dObj.year === today.getFullYear() && dObj.month === (today.getMonth() + 1);
+            });
             if(chartData.length === 0) chartData = [globalData[globalData.length - 1]];
             updateStats(chartData, '本月');
         }
@@ -386,14 +416,21 @@
         let compareData = [];
         if(data1) compareData.push(data1);
         if(data2 && date1 !== date2) compareData.push(data2); 
-        compareData.sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        // 用新函数解析时间戳进行排序
+        compareData.sort((a, b) => {
+            const tA = parseDate(a.date) ? new Date(parseDate(a.date).year, parseDate(a.date).month - 1, parseDate(a.date).day).getTime() : 0;
+            const tB = parseDate(b.date) ? new Date(parseDate(b.date).year, parseDate(b.date).month - 1, parseDate(b.date).day).getTime() : 0;
+            return tA - tB;
+        });
         
         statsDisplay.innerHTML = ''; 
         updateChartData(compareData);
     }
 
     function updateChartData(dataArray) {
-        myChart.data.labels = dataArray.map(item => item.date);
+        // 图表也应用智能日期显示
+        myChart.data.labels = dataArray.map(item => formatDateForDisplay(item.date));
         myChart.data.datasets[0].data = dataArray.map(item => item.revenue);
         myChart.data.datasets[0].backgroundColor = 'rgba(0, 122, 255, 0.6)';
         myChart.update();
