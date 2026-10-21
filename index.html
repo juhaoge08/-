@@ -11,21 +11,23 @@
         /* 顶部余额卡片 */
         .top-balance { 
             background: linear-gradient(135deg, #007aff, #00c6ff); color: white; width: 100%; max-width: 600px; padding: 25px 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,122,255,0.3); text-align: center; margin-top: 10px; margin-bottom: 30px; position: relative; 
+            overflow: hidden; /* 让裂纹不溢出卡片圆角 */
         }
-        .top-balance p { margin: 0; font-size: 14px; opacity: 0.9; letter-spacing: 1px; transition: color 0.3s; }
+        .top-balance p { margin: 0; font-size: 14px; opacity: 0.9; letter-spacing: 1px; transition: color 0.3s; position: relative; z-index: 2; }
         .top-balance p.crit-text { color: #ff3b30; font-weight: bold; opacity: 1; }
         
-        .top-balance h2 { margin: 10px 0 0 0; font-size: clamp(28px, 8vw, 48px); font-weight: bold; white-space: nowrap; display: inline-block; transition: transform 0.1s ease; }
+        .top-balance h2 { margin: 10px 0 0 0; font-size: clamp(28px, 8vw, 48px); font-weight: bold; white-space: nowrap; display: inline-block; transition: transform 0.1s ease; position: relative; z-index: 2; }
         .top-balance h2.pop { transform: scale(1.15); color: #ffeb3b; }
 
         /* 卡片被撞毁的坍塌动画 */
         .top-balance.smashed {
             animation: collapseCard 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
             border: 3px solid #ff3b30;
-            box-shadow: 0 20px 50px rgba(255, 59, 48, 0.5); 
-            z-index: 1; 
+            box-shadow: 0 20px 50px rgba(255, 59, 48, 0.5);
+            z-index: 1;
         }
         
+        /* 撞击瞬间卡片内文字的震动 */
         .top-balance.smashed h2, .top-balance.smashed p {
             transform: rotate(-6deg) scale(0.95);
             transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -39,39 +41,7 @@
             100% { transform: rotate(12deg) translate(15px, 35px) scale(1); }
         }
 
-        /* ================= 新增：裂痕特效 ================= */
-        .card-crack {
-            position: absolute;
-            top: -3px; left: -3px; right: -3px; bottom: -3px;
-            border-radius: 20px;
-            pointer-events: none;
-            /* 用 SVG 画出的龟裂纹理 */
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M50 0 L45 30 L65 50 L40 70 L55 100' stroke='%23333' stroke-width='2' fill='none' opacity='0.6'/%3E%3Cpath d='M45 30 L20 40' stroke='%23333' stroke-width='1.5' fill='none' opacity='0.5'/%3E%3Cpath d='M60 50 L85 45' stroke='%23333' stroke-width='2' fill='none' opacity='0.6'/%3E%3Cpath d='M40 70 L15 85' stroke='%23333' stroke-width='1.5' fill='none' opacity='0.4'/%3E%3Cpath d='M45 30 L35 0' stroke='%23333' stroke-width='1' fill='none' opacity='0.4'/%3E%3C/svg%3E");
-            background-size: cover;
-            animation: crackAppear 0.3s ease-out forwards;
-        }
-
-        @keyframes crackAppear {
-            0% { opacity: 0; transform: scale(0.9); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        /* ================= 新增：金钱掉落粒子 ================= */
-        .money-particle {
-            position: fixed;
-            font-size: 24px;
-            pointer-events: none;
-            z-index: 9999;
-            animation: fallAndFade 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-        }
-
-        @keyframes fallAndFade {
-            0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-            80% { opacity: 1; }
-            100% { transform: translateY(100vh) rotate(720deg) scale(0.5); opacity: 0; }
-        }
-
-        /* 震动动画 */
+        /* 震动动画 (用于普通暴击扣款) */
         @keyframes shake {
             0% { transform: translate(1px, 1px) rotate(0deg); }
             10% { transform: translate(-3px, -2px) rotate(-1deg); }
@@ -100,6 +70,44 @@
 
         .tips-text { color: #a1a1a6; font-size: 13px; margin-top: 30px; letter-spacing: 1px; }
 
+        /* ================= 裂纹图层 ================= */
+        .crack-layer {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0;
+            animation: crackAppear 0.4s ease-out forwards;
+            filter: drop-shadow(0 0 2px rgba(255,255,255,0.55));
+        }
+        @keyframes crackAppear {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        /* ================= 金钱粒子 ================= */
+        .money-particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 10001;
+            font-size: 24px;
+            line-height: 1;
+            will-change: transform, opacity;
+            animation: moneyFall 1.8s cubic-bezier(0.35, 0.05, 0.65, 1) forwards;
+        }
+        .money-particle.bag {
+            font-size: 36px;
+            animation-duration: 2.2s;
+            filter: drop-shadow(0 0 10px rgba(255, 200, 0, 0.95));
+        }
+        @keyframes moneyFall {
+            0%   { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.4); }
+            10%  { opacity: 1; transform: translate(0, -18px) rotate(25deg) scale(1.12); }
+            100% { opacity: 0; transform: translate(var(--drift), var(--fall)) rotate(var(--spin)) scale(0.85); }
+        }
+
         /* ================= 悬浮窗橘子与气泡 ================= */
         .floating-mascot-container { position: fixed; bottom: 30px; right: 20px; z-index: 9999; }
         
@@ -114,6 +122,7 @@
             transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.1s ease; 
         }
         
+        /* 短按按住时的压扁反馈 */
         .mascot.pressing {
             transform: scale(1.3, 0.6) translateY(15px); 
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); 
@@ -204,6 +213,9 @@
 
 <script>
     let currentBalance = 0; 
+    let displayedBalance = 0;        // 当前“屏幕上显示”的数字（用于滚动）
+    let balanceAnimToken = 0;        // 数字滚动动画令牌，防止多个动画打架
+
     const balanceText = document.getElementById('home-balance');
     const balanceCard = document.getElementById('balance-card');
     const balanceTitle = document.getElementById('balance-title');
@@ -227,22 +239,36 @@
         }
     }
 
+    // ============ 数字滚动动画 ============
     function animateBalance(start, end, duration) {
+        const token = ++balanceAnimToken;
         let startTimestamp = null;
         const step = (timestamp) => {
+            if (token !== balanceAnimToken) return; // 被新动画接管，放弃
             if (!startTimestamp) startTimestamp = timestamp;
             const progress = Math.min((timestamp - startTimestamp) / duration, 1);
             const easeOutQuart = 1 - Math.pow(1 - progress, 4);
             const current = Math.floor((end - start) * easeOutQuart + start);
             
+            displayedBalance = current;
             balanceText.innerText = '$' + current.toLocaleString();
+
             if (progress < 1) {
                 window.requestAnimationFrame(step);
             } else {
+                displayedBalance = end;
                 balanceText.innerText = '$' + end.toLocaleString();
             }
         };
         window.requestAnimationFrame(step);
+    }
+
+    // ============ 扣款（带滚动） ============
+    function deductBalance(amount, duration) {
+        const target = Math.max(0, currentBalance - amount);
+        if (target === currentBalance) return;
+        currentBalance = target;
+        animateBalance(displayedBalance, currentBalance, duration);
     }
 
     function parseDateToTimestamp(dateStr) {
@@ -370,12 +396,12 @@
     let pressStartTime = 0;
     let isPressing = false;
     let isAnimating = false;
-    let hasSmashed = false; 
+    let hasSmashed = false; // 记录是否已经撞毁过卡片，防止重复触发
+
     let activePointerId = null;
-    let moneyDropInterval = null; // 用于控制金钱掉落和扣钱的定时器
 
     mascot.addEventListener('pointerdown', function(e) {
-        if (isAnimating || hasSmashed) return; // 撞坏后就不能再点了
+        if (isAnimating) return;
         isPressing = true;
         pressStartTime = Date.now();
         activePointerId = e.pointerId;
@@ -387,7 +413,7 @@
     });
 
     function releasePress(e) {
-        if (!isPressing || isAnimating || hasSmashed) return;
+        if (!isPressing || isAnimating) return;
         isPressing = false;
         const pointerId = e.pointerId;
         activePointerId = null;
@@ -420,13 +446,13 @@
     }
 
     document.addEventListener('pointerup', function(e) {
-        if (!isPressing || isAnimating || hasSmashed) return;
+        if (!isPressing || isAnimating) return;
         if (activePointerId !== null && e.pointerId !== activePointerId) return;
         releasePress(e);
     });
 
     mascot.addEventListener('pointerup', function(e) {
-        if (!isPressing || isAnimating || hasSmashed) return;
+        if (!isPressing || isAnimating) return;
         if (activePointerId !== null && e.pointerId !== activePointerId) return;
         releasePress(e);
     });
@@ -435,12 +461,12 @@
         cancelPress(e.pointerId);
     });
 
-    // 物理跳跃引擎
+    // ================= 物理跳跃引擎 =================
     function performJump(maxHeight, isSuper) {
         isAnimating = true;
         const startTime = performance.now();
-        const g = 2500; 
-        
+        const g = 2500;
+
         mascot.style.transition = 'none';
 
         const cardRect = balanceCard.getBoundingClientRect();
@@ -464,7 +490,7 @@
 
             if (isSuper && hasSmashed) {
                 const timeSinceHit = currentTime - hitTime;
-                const flySpeed = 1.2; 
+                const flySpeed = 1.2;
                 const flyY = hitY + (timeSinceHit * flySpeed);
                 
                 if (-flyY + mascotRect.top < -150) {
@@ -497,7 +523,7 @@
 
             let rotation = 0;
             if (isSuper) {
-                rotation = (elapsed / 10) % 360; 
+                rotation = (elapsed / 10) % 360;
             } else {
                 rotation = y * 0.1; 
             }
@@ -509,7 +535,6 @@
         requestAnimationFrame(animate);
     }
 
-    // 落地动画
     function triggerLanding() {
         mascot.style.transform = `scale(1.4, 0.5) translateY(15px)`;
         playAudio(soundRelease);
@@ -525,82 +550,177 @@
         }, 100);
     }
 
-    // ================= 撞毁卡片、裂痕、金钱掉落、扣钱 =================
+    // ================= 撞击：裂纹 + 掉钱 =================
+    let crackOriginX = 0;        // 撞击点（相对卡片左侧）
+    let impactScreenX = 0;       // 撞击点屏幕坐标
+    let impactScreenY = 0;
+    let drainActive = false;
+    let drainIntervalId = null;
+    let particleTimeoutId = null;
+    let drainStopTimeoutId = null;
+
     function triggerSmash() {
-        playAudio(soundPress); 
-        
+        playAudio(soundPress);
+
+        // ---- 计算撞击点（在加 .smashed 之前算，坐标才准）----
+        const cardRect = balanceCard.getBoundingClientRect();
+        const mascotRect = mascot.getBoundingClientRect();
+        const w = balanceCard.clientWidth;
+
+        let rawX = (mascotRect.left + mascotRect.width / 2) - cardRect.left;
+        crackOriginX = Math.max(28, Math.min(w - 28, rawX));
+
+        impactScreenX = cardRect.left + crackOriginX;
+        impactScreenY = cardRect.top + cardRect.height - 6;
+
+        // ---- 卡片坍塌 ----
         balanceCard.classList.add('smashed');
-        
         balanceTitle.classList.add('crit-text');
         balanceTitle.innerText = "饿啊～～";
 
-        // 1. 添加裂痕
-        const crack = document.createElement('div');
-        crack.className = 'card-crack';
-        balanceCard.appendChild(crack);
+        // ---- 画裂纹 ----
+        drawCracks();
 
-        // 2. 开启持续掉落金钱粒子和每秒扣款
+        // ---- 开始掉钱 ----
         startMoneyDrain();
     }
 
-    function startMoneyDrain() {
-        // 立即开启定时器，每 1000 毫秒（1秒）执行一次
-        moneyDropInterval = setInterval(() => {
-            // 如果余额还有钱，继续掉
-            if (currentBalance > 0) {
-                // 扣1块钱
-                currentBalance -= 1;
-                balanceText.innerText = '$' + currentBalance.toLocaleString();
-                
-                // 余额数字抖动一下
-                balanceText.classList.add('pop');
-                setTimeout(() => { balanceText.classList.remove('pop'); }, 100);
+    function drawCracks() {
+        const old = balanceCard.querySelector('.crack-layer');
+        if (old) old.remove();
 
-                // 生成 1-3 个金钱粒子
-                const particleCount = Math.floor(Math.random() * 3) + 1;
-                for (let i = 0; i < particleCount; i++) {
-                    spawnMoneyParticle();
-                }
-            } else {
-                // 没钱了，停止掉落和扣款
-                clearInterval(moneyDropInterval);
+        const w = balanceCard.clientWidth;
+        const h = balanceCard.clientHeight;
+
+        const NS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(NS, 'svg');
+        svg.setAttribute('class', 'crack-layer');
+        svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+        svg.setAttribute('preserveAspectRatio', 'none');
+
+        const ix = crackOriginX;
+        const iy = h - 4;
+
+        const branches = 6 + Math.floor(Math.random() * 3);
+
+        for (let b = 0; b < branches; b++) {
+            const t = branches === 1 ? 0.5 : b / (branches - 1);
+            // 从偏左下 → 正上 → 偏右下 扇开
+            let angle = -Math.PI * 0.94 + t * Math.PI * 0.88;
+            angle += (Math.random() - 0.5) * 0.28;
+
+            const segCount = 4 + Math.floor(Math.random() * 4);
+            const totalLen = h * (0.55 + Math.random() * 0.85);
+            const segLen = totalLen / segCount;
+
+            const pts = [[ix, iy]];
+            let cx = ix, cy = iy;
+            for (let s = 0; s < segCount; s++) {
+                angle += (Math.random() - 0.5) * 0.55;
+                cx += Math.cos(angle) * segLen;
+                cy += Math.sin(angle) * segLen;
+                pts.push([cx, cy]);
             }
-        }, 1000);
+
+            const poly = document.createElementNS(NS, 'polyline');
+            poly.setAttribute('points', pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '));
+            poly.setAttribute('fill', 'none');
+            poly.setAttribute('stroke', b % 2 === 0 ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.75)');
+            poly.setAttribute('stroke-width', b % 2 === 0 ? '2.2' : '1.3');
+            poly.setAttribute('stroke-linecap', 'round');
+            poly.setAttribute('stroke-linejoin', 'round');
+            svg.appendChild(poly);
+        }
+
+        // 撞击点凹坑
+        const pit = document.createElementNS(NS, 'circle');
+        pit.setAttribute('cx', ix);
+        pit.setAttribute('cy', iy);
+        pit.setAttribute('r', '11');
+        pit.setAttribute('fill', 'rgba(0,0,0,0.25)');
+        svg.appendChild(pit);
+
+        const core = document.createElementNS(NS, 'circle');
+        core.setAttribute('cx', ix);
+        core.setAttribute('cy', iy);
+        core.setAttribute('r', '5');
+        core.setAttribute('fill', 'rgba(255,255,255,0.4)');
+        svg.appendChild(core);
+
+        balanceCard.appendChild(svg);
     }
 
-    // 生成单个金钱粒子的函数
+    // ================= 掉钱系统 =================
+    function startMoneyDrain() {
+        if (drainActive) return;
+        drainActive = true;
+
+        // 每 0.5 秒扣 1 块（滚动数字）
+        drainIntervalId = setInterval(() => {
+            if (currentBalance <= 0) {
+                stopMoneyDrain();
+                return;
+            }
+            deductBalance(1, 260);
+        }, 500);
+
+        // 每秒约 2~3 个金钱粒子
+        const spawnLoop = () => {
+            if (!drainActive) return;
+            spawnMoneyParticle();
+            particleTimeoutId = setTimeout(spawnLoop, 330 + Math.random() * 220);
+        };
+        spawnLoop();
+
+        // 持续 8 秒后自动停止
+        drainStopTimeoutId = setTimeout(stopMoneyDrain, 8000);
+    }
+
+    function stopMoneyDrain() {
+        drainActive = false;
+        if (drainIntervalId) { clearInterval(drainIntervalId); drainIntervalId = null; }
+        if (particleTimeoutId) { clearTimeout(particleTimeoutId); particleTimeoutId = null; }
+        if (drainStopTimeoutId) { clearTimeout(drainStopTimeoutId); drainStopTimeoutId = null; }
+    }
+
     function spawnMoneyParticle() {
-        const money = document.createElement('div');
-        money.className = 'money-particle';
-        // 随机使用金币、钞票或绿色美元符号
-        const icons = ['🪙', '💵', '💸', '🟢'];
-        money.innerText = icons[Math.floor(Math.random() * icons.length)];
-        
-        // 随机获取当前卡片位置，让金钱从卡片附近掉出来
-        const rect = balanceCard.getBoundingClientRect();
-        const startX = rect.left + Math.random() * rect.width;
-        const startY = rect.top + Math.random() * 50; // 在卡片上半部分随机位置
+        const isBag = Math.random() < (1 / 20); // 1/20 概率掉钱袋
 
-        money.style.left = startX + 'px';
-        money.style.top = startY + 'px';
-        
-        // 随机大小
-        const size = 16 + Math.random() * 20;
-        money.style.fontSize = size + 'px';
+        const el = document.createElement('div');
+        el.className = 'money-particle' + (isBag ? ' bag' : '');
+        el.textContent = isBag ? '💰' : (Math.random() < 0.5 ? '🪙' : '💵');
 
-        document.body.appendChild(money);
+        const drift = (Math.random() - 0.5) * 190;
+        const fall = window.innerHeight * (0.55 + Math.random() * 0.35);
+        const spin = (Math.random() > 0.5 ? 1 : -1) * (360 + Math.random() * 540);
 
-        // 2秒后自动销毁这个粒子元素
-        setTimeout(() => {
-            money.remove();
-        }, 2000);
+        el.style.left = (impactScreenX + (Math.random() - 0.5) * 70) + 'px';
+        el.style.top = impactScreenY + 'px';
+        el.style.setProperty('--drift', drift.toFixed(0) + 'px');
+        el.style.setProperty('--fall', fall.toFixed(0) + 'px');
+        el.style.setProperty('--spin', spin.toFixed(0) + 'deg');
+
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 2600);
+
+        if (isBag) {
+            // 钱袋：扣 100 块（滚动）
+            deductBalance(100, 900);
+
+            const bagDiv = document.createElement('div');
+            bagDiv.className = 'crit-float';
+            bagDiv.innerHTML = `-$100<span>💰 钱袋掉了！</span>`;
+            document.body.appendChild(bagDiv);
+            setTimeout(() => bagDiv.remove(), 2000);
+
+            playAudio(soundPress);
+        }
     }
 
-    // 短按逻辑
+    // ================= 短按逻辑 =================
     function executeMascotClick() {
         if (currentBalance > 0) {
-            currentBalance -= 1;
-            balanceText.innerText = '$' + currentBalance.toLocaleString();
+            deductBalance(1, 200);
             balanceText.classList.add('pop');
             setTimeout(() => { balanceText.classList.remove('pop'); }, 100); 
         }
