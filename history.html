@@ -29,21 +29,21 @@
         }
         .main-filter-btn:active { background: #f0f0f5; transform: scale(0.98); }
 
-        /* 图表容器 */
-        .chart-container { position: relative; background: white; padding: 15px; padding-top: 65px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 400px; margin-bottom: 10px; }
+        /* 图表容器，给底部留空间给错位的数字 */
+        .chart-container { position: relative; background: white; padding: 15px; padding-top: 65px; padding-bottom: 50px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 420px; margin-bottom: 10px; }
         
-        /* ================= 右侧闹铃开关模块 ================= */
+        /* ================= 右侧模块 ================= */
         .chart-header { position: absolute; top: 15px; right: 15px; z-index: 10; }
-        
-        /* 外层容器，整体靠右对齐 */
         .compare-widget { position: relative; display: flex; flex-direction: column; align-items: flex-end; }
         
-        /* 第一行：左字 + 箭头 + 开关 */
-        .compare-main-row { display: flex; align-items: center; gap: 6px; }
+        /* 第一行：文字 + 开关 */
+        .compare-main-row { display: flex; align-items: center; gap: 8px; }
         .compare-label { font-size: 13px; color: #1d1d1f; font-weight: 600; }
 
-        /* 下拉箭头 */
-        .dropdown-trigger { cursor: pointer; padding: 2px 4px; display: flex; align-items: center; justify-content: center; }
+        /* 第二行：小字 + 下拉箭头 (右对齐) */
+        .compare-sub-row { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+        .compare-subtext { font-size: 10px; color: #86868b; }
+        .dropdown-trigger { cursor: pointer; padding: 2px; display: flex; align-items: center; justify-content: center; }
         .arrow { font-size: 10px; color: #86868b; transition: transform 0.2s; }
         .arrow.bounce { animation: downBounce 0.4s cubic-bezier(0.28, 0.84, 0.42, 1); }
         @keyframes downBounce {
@@ -60,19 +60,15 @@
         input:checked + .slider { background-color: #34C759; }
         input:checked + .slider:before { transform: translateX(18px); }
 
-        /* 第二行：小字靠右对齐 */
-        .compare-subtext { font-size: 10px; color: #86868b; margin-top: 4px; margin-right: 2px; }
-
         /* 下拉菜单 */
         .dropdown-menu {
-            position: absolute; top: 50px; right: 0; background: white; border: 1px solid #e5e5ea;
+            position: absolute; top: 55px; right: 0; background: white; border: 1px solid #e5e5ea;
             border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); min-width: 150px;
             opacity: 0; pointer-events: none; transform: translateY(-10px);
             transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             overflow: hidden; max-height: 200px; overflow-y: auto; z-index: 20;
         }
         .dropdown-menu.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
-        
         .dropdown-item {
             padding: 10px 15px; font-size: 13px; color: #1d1d1f; cursor: pointer;
             border-bottom: 1px solid #f5f5f7; transition: background 0.2s;
@@ -96,11 +92,9 @@
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .calendar-modal.show .calendar-popup-content { transform: translateY(0); }
-
         .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; color: #1d1d1f; font-size: 16px;}
         .arrow-btn { background: #f5f5f7; border: none; font-size: 16px; color: #007aff; cursor: pointer; padding: 8px 16px; border-radius: 12px; transition: 0.2s; }
         .arrow-btn:active { background: #e5e5ea; }
-
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; margin-bottom: 15px; }
         .weekday { font-size: 12px; color: #86868b; margin-bottom: 5px; font-weight: 500; }
         .day-cell { font-size: 15px; padding: 8px 0; border-radius: 50%; color: #1d1d1f; cursor: pointer; transition: 0.1s; }
@@ -108,7 +102,6 @@
         .day-cell.in-range { background: #e5f0ff; color: #007aff; border-radius: 0; }
         .day-cell.start-end { background: #007aff; color: white; border-radius: 50%; font-weight: bold; box-shadow: 0 4px 10px rgba(0,122,255,0.3); }
         .day-cell:active:not(.empty) { transform: scale(0.9); }
-
         .calendar-footer { display: flex; gap: 10px; margin-bottom: 15px; }
         .date-pick-btn {
             flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #e5e5ea;
@@ -116,14 +109,8 @@
             cursor: pointer; transition: 0.2s;
         }
         .date-pick-btn.active { border-color: #007aff; color: #007aff; background: #e5f0ff; }
-
         .confirm-btn { width: 100%; padding: 14px; border-radius: 12px; background: #007aff; color: white; font-size: 16px; font-weight: bold; border: none; cursor: pointer; transition: 0.2s; }
         .confirm-btn:active { background: #005bb5; }
-
-        @media (min-width: 500px) {
-            .header h1 { padding-right: 0; }
-            .chart-container { height: 420px; }
-        }
     </style>
 </head>
 <body>
@@ -151,21 +138,20 @@
                     <!-- 第一行 -->
                     <div class="compare-main-row">
                         <span class="compare-label" id="compare-label">与上月对比</span>
-                        <div class="dropdown-trigger" onclick="toggleDropdown(event)">
-                            <span class="arrow" id="arrowIcon">▼</span>
-                        </div>
                         <label class="switch">
                             <input type="checkbox" id="compare-toggle" checked onchange="toggleCompareSwitch(this)">
                             <span class="slider"></span>
                         </label>
                     </div>
-                    <!-- 第二行小字 -->
-                    <div class="compare-subtext">不想与本月对比？</div>
-                    
-                    <!-- 下拉菜单 -->
-                    <div class="dropdown-menu" id="dropdownMenu">
-                        <!-- JS动态生成 -->
+                    <!-- 第二行 -->
+                    <div class="compare-sub-row">
+                        <span class="compare-subtext">不想与本月对比？</span>
+                        <div class="dropdown-trigger" onclick="toggleDropdown(event)">
+                            <span class="arrow" id="arrowIcon">▼</span>
+                        </div>
                     </div>
+                    <!-- 下拉菜单 -->
+                    <div class="dropdown-menu" id="dropdownMenu"></div>
                 </div>
             </div>
 
@@ -196,7 +182,7 @@
 <script>
     const lineColors = ['#FF69B4', '#007AFF', '#34C759', '#FF9500', '#AF52DE', '#5856D6', '#FF3B30', '#FFCC00', '#5AC8FA', '#FF2D55', '#A2845E', '#00C7BE', '#8E8E93', '#FF9F0A'];
 
-    // ================= 自定义 X 轴插件：单数在上、双数在下，极淡虚线连接 =================
+    // ================= 自定义 X 轴插件 =================
     const staggeredXAxis = {
         id: 'staggeredXAxis',
         afterDraw(chart) {
@@ -205,33 +191,47 @@
             
             ctx.save();
             ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx.fillStyle = '#86868b';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.06)'; // 极淡虚线
-            ctx.setLineDash([2, 2]);
             
-            const oddY = chartArea.bottom + 10;  // 单数在上方
-            const evenY = chartArea.bottom + 28; // 双数在下方
+            // 绘制从图表底部贯穿的极淡虚线
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            
+            for (let i = 0; i < 31; i++) {
+                const xPos = x.getPixelForTick(i);
+                if (xPos < chartArea.left || xPos > chartArea.right) continue;
+                
+                ctx.beginPath();
+                ctx.moveTo(xPos, chartArea.top);
+                ctx.lineTo(xPos, chartArea.bottom + 35); // 向下延伸到文字下方
+                ctx.stroke();
+            }
+            
+            // 取消虚线，开始画数字
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#86868b';
             
             for (let i = 0; i < 31; i++) {
                 const label = i + 1;
                 const xPos = x.getPixelForTick(i);
-                
                 if (xPos < chartArea.left || xPos > chartArea.right) continue;
                 
                 const isOdd = label % 2 !== 0;
-                const yPos = isOdd ? oddY : evenY;
+                // 单数靠上，双数靠下
+                const yPos = isOdd ? chartArea.bottom + 8 : chartArea.bottom + 24; 
                 
-                // 画虚线连接
-                ctx.beginPath();
-                ctx.moveTo(xPos, chartArea.bottom);
-                ctx.lineTo(xPos, yPos);
-                ctx.stroke();
-                
-                // 写字
-                ctx.fillText(label, xPos, yPos + 2);
+                ctx.fillText(label, xPos, yPos);
             }
+            
+            // 画一条图表底部的底线
+            ctx.beginPath();
+            ctx.strokeStyle = '#e5e5ea';
+            ctx.moveTo(chartArea.left, chartArea.bottom);
+            ctx.lineTo(chartArea.right, chartArea.bottom);
+            ctx.stroke();
+            
             ctx.restore();
         }
     };
@@ -243,16 +243,38 @@
             labels: Array.from({length: 31}, (_, i) => i + 1),
             datasets: []
         },
-        plugins: [staggeredXAxis], // 注册插件
+        plugins: [staggeredXAxis], 
         options: {
-            responsive: true, maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
+            responsive: true, 
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false }, // 悬停/点击整列
             layout: {
-                padding: { bottom: 45 } // 为错位的 X 轴留出空间
+                padding: { bottom: 40 } // 给底部数字错位留空间
+            },
+            onClick: (e) => {
+                // 强制用户点击时展示 tooltip
+                const canvasPosition = Chart.helpers.getRelativePosition(e, historyChart);
+                const xValue = historyChart.scales.x.getValueForPixel(canvasPosition.x);
+                if (xValue !== undefined) {
+                    const index = Math.round(xValue);
+                    if (index >= 0 && index < 31) {
+                        historyChart.tooltip.setActiveElements(
+                            historyChart.data.datasets.map((ds, i) => ({ datasetIndex: i, index: index })),
+                            { x: canvasPosition.x, y: canvasPosition.y }
+                        );
+                        historyChart.tooltip.update();
+                        historyChart.draw();
+                    }
+                }
             },
             plugins: {
                 legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, usePointStyle: true } },
                 tooltip: { 
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    padding: 10,
+                    titleFont: { size: 14 },
+                    bodyFont: { size: 13 },
+                    displayColors: true,
                     callbacks: { 
                         title: function(context) { return context[0].label + ' 号'; },
                         label: function(context) {
@@ -271,7 +293,7 @@
             scales: {
                 x: { 
                     grid: { display: false },
-                    ticks: { display: false } // 关闭自带的 X 轴标签，避免重叠
+                    ticks: { display: false } // 隐藏默认的X轴，用我们的插件画
                 },
                 y: { 
                     beginAtZero: true,
@@ -329,8 +351,6 @@
     function toggleDropdown(e) {
         e.stopPropagation();
         const checkbox = document.getElementById('compare-toggle');
-        
-        // 开启下拉时，如果开关是关的，自动帮他打开
         if (!checkbox.checked) {
             checkbox.checked = true;
             toggleCompareSwitch(checkbox);
@@ -375,7 +395,7 @@
         menu.innerHTML = ''; 
 
         allMonths.forEach(k => {
-            // 排除本月(数据就是本月) 和 上个月(默认就是对比上个月)
+            // 彻底排除本月和上个月
             if (k !== lastMonthKey && k !== currentMonthKey) { 
                 const [y, m] = k.split('-');
                 menu.innerHTML += `<div class="dropdown-item" onclick="setCompareMode('${k}', '与 ${y}年${Number(m)+1}月对比')">与 ${y}年${Number(m)+1}月对比</div>`;
