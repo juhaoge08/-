@@ -8,24 +8,24 @@
         * { box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 15px; margin: 0; }
         .container { max-width: 800px; margin: 0 auto; }
-        
+
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
         .back-btn { font-size: 14px; color: #007aff; text-decoration: none; background: #e5e5ea; padding: 8px 12px; border-radius: 12px; font-weight: bold; }
         .header h1 { font-size: 20px; margin: 0; padding-right: 70px; }
 
-        /* ================= 优化后的筛选栏 ================= */
-        .filter-bar { 
-            display: flex; 
+        /* ================= 筛选栏 ================= */
+        .filter-bar {
+            display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px; 
-            margin-bottom: 15px; 
-            background: white; 
-            padding: 15px; 
-            border-radius: 15px; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.04); 
+            gap: 12px;
+            margin-bottom: 15px;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.04);
         }
-        
+
         /* 第一行：日期选择 */
         .date-inputs {
             display: flex;
@@ -34,53 +34,122 @@
             width: 100%;
             justify-content: center;
         }
-        .date-inputs select { 
-            flex: 1; 
+        .date-inputs select {
+            flex: 1;
             max-width: 160px;
-            padding: 10px; 
-            border-radius: 8px; 
-            border: 1px solid #ccc; 
-            font-size: 14px; 
-            outline: none; 
-            background: #f5f5f7; 
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            outline: none;
+            background: #f5f5f7;
         }
         .date-inputs span { color: #86868b; font-size: 14px; }
 
-        /* 第二行：新增的过滤选项 */
+        /* 第二行：旋钮 + 特定词条 */
         .extra-filters {
             display: flex;
-            gap: 15px;
+            flex-direction: column;
+            gap: 12px;
             width: 100%;
-            justify-content: center;
             align-items: center;
-            flex-wrap: wrap;
-        }
-        
-        .pvs-check {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #1d1d1f;
-            cursor: pointer;
-            user-select: none;
-        }
-        .pvs-check input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: #007aff;
         }
 
+        /* ---------- 圆形旋钮 ---------- */
+        .knob-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .knob-stage {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .knob-stage:focus-visible { outline: 2px solid #007aff; outline-offset: 6px; border-radius: 40px; }
+
+        .knob-dial {
+            position: relative;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            flex: 0 0 auto;
+            background: linear-gradient(145deg, #ffffff, #ececf0);
+            border: 1px solid #d8d8dd;
+            box-shadow: inset 0 2px 6px rgba(255,255,255,.95), 0 4px 12px rgba(0,0,0,.08);
+        }
+        /* 内圈虚线装饰 */
+        .knob-dial::before {
+            content: '';
+            position: absolute;
+            inset: 10px;
+            border-radius: 50%;
+            border: 1px dashed #dcdce1;
+        }
+        /* 顶部“全部”小刻度 */
+        .knob-dial::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 3px;
+            width: 2px;
+            height: 6px;
+            margin-left: -1px;
+            border-radius: 2px;
+            background: #c7c7cc;
+        }
+
+        .knob-hand {
+            position: absolute;
+            inset: 0;
+            transform: rotate(0deg);
+            transition: transform .42s cubic-bezier(.34, 1.56, .64, 1);
+        }
+        .knob-hand::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 5px;
+            width: 18px;
+            height: 18px;
+            margin-left: -9px;
+            border-radius: 50%;
+            background: #007aff;
+            box-shadow: 0 2px 6px rgba(0, 122, 255, .45);
+        }
+
+        .knob-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #a1a1a6;
+            padding: 6px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+            transition: color .25s, background .25s;
+            cursor: pointer;
+        }
+        .knob-label.active { color: #007aff; background: #eaf3ff; }
+
+        .knob-status {
+            font-size: 12px;
+            color: #86868b;
+            min-height: 16px;
+        }
+
+        /* ---------- 特定词条下拉 ---------- */
         .keyword-select {
-            flex: 1;
-            max-width: 160px;
-            padding: 10px; 
-            border-radius: 8px; 
-            border: 1px solid #ccc; 
-            font-size: 14px; 
-            outline: none; 
+            width: 100%;
+            max-width: 220px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            outline: none;
             background: #f5f5f7;
         }
 
@@ -91,22 +160,22 @@
             width: 100%;
             justify-content: center;
         }
-        .filter-btn, .reset-btn { 
-            flex: 1; 
+        .filter-btn, .reset-btn {
+            flex: 1;
             max-width: 160px;
-            padding: 10px 0; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-size: 14px; 
-            transition: 0.2s; 
+            padding: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: 0.2s;
             border: none;
         }
         .filter-btn { background: #007aff; color: white; }
         .filter-btn:active { background: #005bb5; }
         .reset-btn { background: #e5e5ea; color: #1d1d1f; }
 
-        /* 电脑端宽屏适配：全都放到一行 */
+        /* 电脑端宽屏适配 */
         @media (min-width: 700px) {
             .filter-bar { flex-direction: row; flex-wrap: nowrap; }
             .date-inputs { width: auto; }
@@ -116,14 +185,14 @@
         }
 
         .expense-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); }
-        
+
         .expense-list { list-style: none; padding: 0; margin: 0; }
         .expense-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px dashed #f0f0f0; font-size: 15px; }
         .expense-item:last-child { border-bottom: none; }
         .expense-memo { color: #1d1d1f; font-weight: 600; margin-bottom: 4px; }
         .expense-date { font-size: 12px; color: #a1a1a6; }
         .expense-amount { color: #ff3b30; font-weight: bold; font-size: 18px; }
-        
+
         .no-expense { color: #a1a1a6; font-size: 14px; text-align: center; padding: 30px 0; }
     </style>
 </head>
@@ -142,167 +211,7 @@
             <span>至</span>
             <select id="end-date"></select>
         </div>
-        
-        <!-- 第二行：高级过滤 -->
+
+        <!-- 第二行：旋钮 + 特定词条 -->
         <div class="extra-filters">
-            <label class="pvs-check">
-                <input type="checkbox" id="hide-pvs" onchange="filterExpenses()"> 不看PVS
-            </label>
-            <select id="keyword-filter" class="keyword-select" onchange="filterExpenses()">
-                <option value="">查询选定付账</option>
-                <!-- 动态生成 -->
-            </select>
-        </div>
-
-        <!-- 第三行：按钮 -->
-        <div class="action-buttons">
-            <button class="filter-btn" onclick="filterExpenses()">查询</button>
-            <button class="reset-btn" onclick="resetExpenses()">重置</button>
-        </div>
-    </div>
-
-    <div class="expense-card">
-        <ul class="expense-list" id="expense-list">
-            <li class="no-expense">正在加载明细...</li>
-        </ul>
-    </div>
-</div>
-
-<script>
-    let globalExpenses = []; // 存储原始数据
-
-    // 日期解析辅助函数
-    function parseDateToTimestamp(dateStr) {
-        const match = dateStr.match(/(?:(\d+)年)?(\d+)月(\d+)日/);
-        if (match) {
-            const year = match[1] ? Number(match[1]) : new Date().getFullYear();
-            const month = Number(match[2]) - 1;
-            const day = Number(match[3]);
-            return new Date(year, month, day).getTime();
-        }
-        return 0;
-    }
-
-    // 渲染列表：默认就是降序（最新在上），不管怎么查都是最新的在最上面
-    function renderList(dataArray) {
-        const listEl = document.getElementById('expense-list');
-        listEl.innerHTML = '';
-
-        if (dataArray && dataArray.length > 0) {
-            const sortedData = [...dataArray].sort((a, b) => {
-                const timeA = parseDateToTimestamp(a.date);
-                const timeB = parseDateToTimestamp(b.date);
-                return timeB - timeA; 
-            });
-
-            sortedData.forEach(item => {
-                listEl.innerHTML += `
-                    <li class="expense-item">
-                        <div>
-                            <div class="expense-memo">${item.memo}</div>
-                            <span class="expense-date">${item.date}</span>
-                        </div>
-                        <div class="expense-amount">-$${Number(item.amount).toLocaleString()}</div>
-                    </li>
-                `;
-            });
-        } else {
-            listEl.innerHTML = '<li class="no-expense">没有找到符合条件的扣款记录～</li>';
-        }
-    }
-
-    // 初始化下拉框
-    function initSelectOptions() {
-        const startSel = document.getElementById('start-date');
-        const endSel = document.getElementById('end-date');
-        const keywordSel = document.getElementById('keyword-filter');
-        startSel.innerHTML = ''; endSel.innerHTML = ''; keywordSel.innerHTML = '<option value="">所有特定词条</option>';
-
-        const uniqueDates = [...new Set(globalExpenses.map(item => item.date))];
-        uniqueDates.sort((a, b) => parseDateToTimestamp(a) - parseDateToTimestamp(b));
-
-        uniqueDates.forEach(date => {
-            startSel.innerHTML += `<option value="${date}">${date}</option>`;
-            endSel.innerHTML += `<option value="${date}">${date}</option>`;
-        });
-
-        if (uniqueDates.length > 0) {
-            startSel.value = uniqueDates[0];
-            endSel.value = uniqueDates[uniqueDates.length - 1];
-        }
-
-        // 提取所有不重复的 Memo 词条，用于特定查询
-        const uniqueMemos = [...new Set(globalExpenses.map(item => item.memo))];
-        // 过滤掉空值和PVS相关的（如果你想在列表里也不显示PVS，可以在这里加逻辑）
-        uniqueMemos.filter(m => m && m.trim() !== "").forEach(memo => {
-            keywordSel.innerHTML += `<option value="${memo}">${memo}</option>`;
-        });
-    }
-
-    // 页面加载时拉取数据
-    fetch('expenses.json')
-        .then(response => response.json())
-        .then(expenses => {
-            if (expenses && expenses.length > 0) {
-                globalExpenses = expenses;
-                document.getElementById('filter-bar').style.display = 'flex';
-                initSelectOptions();
-                renderList(globalExpenses);
-            } else {
-                document.getElementById('expense-list').innerHTML = '<li class="no-expense">近期无扣款记录，大王很节约～</li>';
-            }
-        })
-        .catch(err => {
-            document.getElementById('expense-list').innerHTML = '<li class="no-expense">读取失败，请检查 expenses.json</li>';
-        });
-
-    // 核心过滤逻辑（集成了日期、PVS屏蔽、特定词条）
-    function filterExpenses() {
-        const startDate = document.getElementById('start-date').value;
-        const endDate = document.getElementById('end-date').value;
-        const hidePvs = document.getElementById('hide-pvs').checked;
-        const keyword = document.getElementById('keyword-filter').value;
-
-        let startTs = parseDateToTimestamp(startDate);
-        let endTs = parseDateToTimestamp(endDate);
-
-        if (startTs > endTs) {
-            [startTs, endTs] = [endTs, startTs];
-        }
-
-        const filteredData = globalExpenses.filter(item => {
-            // 1. 日期过滤
-            const ts = parseDateToTimestamp(item.date);
-            if (ts < startTs || ts > endTs) return false;
-
-            // 2. PVS 过滤 (不区分大小写)
-            if (hidePvs) {
-                const memoStr = (item.memo || "").toLowerCase();
-                if (memoStr.includes('pvs')) return false;
-            }
-
-            // 3. 特定词条过滤
-            if (keyword && item.memo !== keyword) return false;
-
-            return true;
-        });
-
-        renderList(filteredData);
-    }
-
-    // 点击重置
-    function resetExpenses() {
-        // 恢复默认日期选择
-        initSelectOptions();
-        // 取消勾选PVS
-        document.getElementById('hide-pvs').checked = false;
-        // 词条恢复为全部
-        document.getElementById('keyword-filter').value = "";
-        
-        // 恢复默认展示全部，从新到旧
-        renderList(globalExpenses);
-    }
-</script>
-
-</body>
-</html>
+            <div class="kn
