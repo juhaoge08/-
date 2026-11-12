@@ -29,11 +29,8 @@
         .tab-btn { background: white; border: 1px solid #d2d2d7; color: #1d1d1f; padding: 8px 14px; border-radius: 20px; cursor: pointer; font-size: 13px; transition: 0.2s; }
         .tab-btn.active { background: #007aff; color: white; border-color: #007aff; box-shadow: 0 4px 10px rgba(0,122,255,0.2); }
 
-        .custom-compare { display: none; flex-direction: column; gap: 10px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .custom-compare select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; outline: none; background: #f5f5f7; }
-        .compare-btn { background: #34c759; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; }
-
-        .chart-container { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 300px; margin-bottom: 10px; }
+        /* 调整图表容器，为底部的错位日期留空间 */
+        .chart-container { background: white; padding: 15px; padding-top: 25px; padding-bottom: 10px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 380px; margin-bottom: 10px; position: relative; }
         
         .stats-info { text-align: center; font-size: 16px; color: #1d1d1f; font-weight: 500; min-height: 20px; padding: 10px 0; line-height: 1.6; }
         .stats-info span { color: #007aff; font-weight: 700; font-size: 18px; }
@@ -41,86 +38,26 @@
         /* ================= 悬浮日历核心区 ================= */
         .calendar-widget {
             position: fixed;
-            top: 75px; /* 在标题栏下方一点点 */
-            right: 15px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
+            top: 75px; right: 15px; z-index: 9999;
+            display: flex; flex-direction: column; align-items: flex-end;
         }
-
         .calendar-icon {
-            font-size: 35px;
-            cursor: pointer;
-            user-select: none;
+            font-size: 35px; cursor: pointer; user-select: none;
             transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
-            display: inline-block;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
-            background: white;
-            padding: 8px;
-            border-radius: 50%;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: inline-block; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+            background: white; padding: 8px; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-
-        .calendar-icon:active {
-            transform: scale(1.3, 0.6) translateY(10px);
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15));
-        }
-
-        /* 气泡日历面板 */
+        .calendar-icon:active { transform: scale(1.3, 0.6) translateY(10px); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15)); }
         .calendar-popup {
-            position: absolute;
-            top: 55px;
-            right: 0;
-            background: white;
-            border: 2px solid #1d1d1f;
-            border-radius: 16px;
-            padding: 15px;
-            width: 240px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            opacity: 0;
-            transform: translateY(-10px) scale(0.8);
-            transform-origin: top right;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            pointer-events: none;
+            position: absolute; top: 55px; right: 0; background: white; border: 2px solid #1d1d1f;
+            border-radius: 16px; padding: 15px; width: 240px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            opacity: 0; transform: translateY(-10px) scale(0.8); transform-origin: top right;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none;
         }
-
-        .calendar-popup.show {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            pointer-events: auto;
-        }
-
-        /* 气泡小尾巴 */
-        .calendar-popup::after {
-            content: '';
-            position: absolute;
-            top: -10px;
-            right: 18px;
-            border-width: 0 10px 10px;
-            border-style: solid;
-            border-color: transparent transparent #1d1d1f transparent;
-        }
-        .calendar-popup::before {
-            content: '';
-            position: absolute;
-            top: -7px;
-            right: 20px;
-            border-width: 0 8px 8px;
-            border-style: solid;
-            border-color: transparent transparent #ffffff transparent;
-            z-index: 1;
-        }
-
-        .calendar-text-tip {
-            font-size: 13px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 10px;
-            color: #007aff;
-        }
-
-        /* 迷你日历网格 */
+        .calendar-popup.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        .calendar-popup::after { content: ''; position: absolute; top: -10px; right: 18px; border-width: 0 10px 10px; border-style: solid; border-color: transparent transparent #1d1d1f transparent; }
+        .calendar-popup::before { content: ''; position: absolute; top: -7px; right: 20px; border-width: 0 8px 8px; border-style: solid; border-color: transparent transparent #ffffff transparent; z-index: 1; }
+        .calendar-text-tip { font-size: 13px; font-weight: bold; text-align: center; margin-bottom: 10px; color: #007aff; }
         .mini-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 12px; }
         .mini-calendar .weekday { color: #86868b; font-weight: bold; font-size: 11px; margin-bottom: 4px;}
         .mini-calendar .day { padding: 4px 0; border-radius: 50%; color: #1d1d1f; }
@@ -130,10 +67,8 @@
         @media (min-width: 500px) {
             .cards { flex-direction: row; }
             .card { flex: 1; }
-            .custom-compare { flex-direction: row; align-items: center; }
-            .custom-compare select { width: auto; }
             .header h1 { padding-right: 0; }
-            .calendar-widget { top: 85px; right: 30px; } /* 电脑端稍微移动一下 */
+            .calendar-widget { top: 85px; right: 30px; }
         }
     </style>
 </head>
@@ -141,14 +76,10 @@
 
 <!-- 悬浮日历挂件 -->
 <div class="calendar-widget">
-    <!-- 气泡面板 -->
     <div class="calendar-popup" id="calendarPopup">
         <div class="calendar-text-tip" id="dateTipText">加载中...</div>
-        <div class="mini-calendar" id="miniCalendar">
-            <!-- JS 动态生成 -->
-        </div>
+        <div class="mini-calendar" id="miniCalendar"></div>
     </div>
-    <!-- 日历图标 -->
     <div class="calendar-icon" id="calendarIcon">📅</div>
 </div>
 
@@ -169,21 +100,12 @@
                 <p id="kpi-date-title">昨日营业额</p>
                 <div class="number" id="total-amount">0</div>
             </div>
-            <!-- 已删除昨日余额卡片 -->
         </div>
 
         <div class="tabs">
             <button class="tab-btn" onclick="changeChart('yesterday', this)">只看昨日</button>
             <button class="tab-btn active" onclick="changeChart('7days', this)">近7天对比</button>
             <button class="tab-btn" onclick="changeChart('month', this)">本月对比</button>
-            <button class="tab-btn" onclick="toggleCustomCompare(this)">自由选择日期</button>
-        </div>
-
-        <div class="custom-compare" id="custom-compare-panel">
-            <select id="date-select-1"></select>
-            <span style="text-align: center; color: #86868b;">对比</span>
-            <select id="date-select-2"></select>
-            <button class="compare-btn" onclick="doCustomCompare()">生成图表</button>
         </div>
 
         <div class="chart-container">
@@ -195,55 +117,150 @@
 </div>
 
 <script>
-    // ================= 日历组件逻辑 =================
+    // 14种区分度极高的颜色（第一条固定为粉色Hot Pink）
+    const lineColors = ['#FF69B4', '#007AFF', '#34C759', '#FF9500', '#AF52DE', '#5856D6', '#FF3B30', '#FFCC00', '#5AC8FA', '#FF2D55', '#A2845E', '#00C7BE', '#8E8E93', '#FF9F0A'];
+
+    // ================= 自定义 X 轴插件（单数在下，双数在上，虚线贯穿） =================
+    const staggeredXAxis = {
+        id: 'staggeredXAxis',
+        afterDraw(chart) {
+            const { ctx, chartArea, scales: { x } } = chart;
+            if (!x || !chartArea) return;
+            
+            ctx.save();
+            ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            
+            // 绘制极淡贯穿虚线
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.04)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            
+            for (let i = 0; i < 31; i++) {
+                const xPos = x.getPixelForTick(i);
+                if (xPos < chartArea.left || xPos > chartArea.right) continue;
+                
+                ctx.beginPath();
+                ctx.moveTo(xPos, chartArea.top);
+                ctx.lineTo(xPos, chartArea.bottom);
+                ctx.stroke();
+            }
+            
+            // 写字
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#86868b';
+            
+            for (let i = 0; i < 31; i++) {
+                const label = i + 1;
+                const xPos = x.getPixelForTick(i);
+                if (xPos < chartArea.left || xPos > chartArea.right) continue;
+                
+                const isOdd = label % 2 !== 0;
+                // 单数靠底，双数靠顶
+                if (isOdd) {
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(label, xPos, chartArea.bottom + 6);
+                } else {
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(label, xPos, chartArea.top - 6);
+                }
+            }
+            ctx.restore();
+        }
+    };
+
+    const ctx = document.getElementById('myChart').getContext('2d');
+    let myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Array.from({length: 31}, (_, i) => i + 1), // 固定 1-31
+            datasets: []
+        },
+        plugins: [staggeredXAxis],
+        options: {
+            responsive: true, 
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            layout: { padding: { top: 20, bottom: 20 } },
+            plugins: {
+                legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, usePointStyle: true } },
+                tooltip: { 
+                    backgroundColor: 'rgba(0,0,0,0.85)',
+                    padding: 12,
+                    titleFont: { size: 14 },
+                    bodyFont: { size: 13 },
+                    displayColors: true,
+                    callbacks: { 
+                        title: function(context) { return '📅 ' + context[0].label + ' 号 营业额'; },
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) label += ': ';
+                            if (context.parsed.y !== null) {
+                                let valInWan = context.parsed.y / 10000;
+                                let formatted = valInWan.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+                                label += formatted + ' 万';
+                            } else {
+                                label += '无数据';
+                            }
+                            return label;
+                        }
+                    } 
+                }
+            },
+            scales: {
+                x: { 
+                    grid: { display: false },
+                    ticks: { display: false } // 用插件画
+                },
+                y: { 
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            if (value === 0) return '0';
+                            return (value / 10000) + 'w';
+                        },
+                        font: { size: 11 }
+                    }
+                }
+            }
+        }
+    });
+
+    // ================= 日历组件 =================
     const calendarIcon = document.getElementById('calendarIcon');
     const calendarPopup = document.getElementById('calendarPopup');
     const dateTipText = document.getElementById('dateTipText');
     const miniCalendar = document.getElementById('miniCalendar');
 
-    // 生成当前日历
     function generateCalendar() {
         const now = new Date();
         const year = now.getFullYear();
         const month = now.getMonth();
         const date = now.getDate();
         const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-        
-        // 提示语：10月20号是周一哦～
         dateTipText.innerText = `${month + 1}月${date}号是${weekdays[now.getDay()]}哦～`;
 
-        // 渲染日历网格
         miniCalendar.innerHTML = '';
-        
-        // 渲染星期表头
         ['日', '一', '二', '三', '四', '五', '六'].forEach(w => {
             miniCalendar.innerHTML += `<div class="weekday">${w}</div>`;
         });
 
-        // 获取本月第一天是周几，以及本月总天数
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        // 填充月初的空白
-        for (let i = 0; i < firstDay; i++) {
-            miniCalendar.innerHTML += `<div class="day empty"></div>`;
-        }
-
-        // 填充日期
+        for (let i = 0; i < firstDay; i++) miniCalendar.innerHTML += `<div class="day empty"></div>`;
         for (let i = 1; i <= daysInMonth; i++) {
             const isToday = (i === date) ? 'today' : '';
             miniCalendar.innerHTML += `<div class="day ${isToday}">${i}</div>`;
         }
     }
-    generateCalendar(); // 页面加载时初始化
+    generateCalendar();
 
-    // 点击日历图标切换显示
     calendarIcon.addEventListener('click', function(e) {
-        e.stopPropagation(); // 阻止事件冒泡
+        e.stopPropagation();
         calendarPopup.classList.toggle('show');
     });
 
-    // 点击页面其他地方关闭日历
     document.addEventListener('click', function(e) {
         if (!calendarPopup.contains(e.target) && e.target !== calendarIcon) {
             calendarPopup.classList.remove('show');
@@ -258,17 +275,9 @@
     ];
     document.getElementById('lazy-text').innerText = lazyTexts[Math.floor(Math.random() * lazyTexts.length)];
 
-    const ctx = document.getElementById('myChart').getContext('2d');
-    let myChart = new Chart(ctx, {
-        type: 'bar',
-        data: { labels: [], datasets: [{ label: '营业额', data: [], backgroundColor: 'rgba(0, 122, 255, 0.6)', borderRadius: 6 }] },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
-
     let globalData = []; 
     const statsDisplay = document.getElementById('stats-display');
 
-    // ★ 新增：解析日期字符串（兼容带年份和不带年份）
     function parseDate(dateStr) {
         const match = dateStr.match(/(?:(\d+)年)?(\d+)月(\d+)日/);
         if (match) {
@@ -280,11 +289,9 @@
         return null;
     }
 
-    // ★ 新增：格式化日期显示（今年不显示年份，往年显示年份）
     function formatDateForDisplay(dateStr) {
         const dateObj = parseDate(dateStr);
         if (!dateObj) return dateStr;
-        
         const currentYear = new Date().getFullYear();
         if (dateObj.year === currentYear) {
             return `${dateObj.month}月${dateObj.day}日`;
@@ -307,7 +314,6 @@
         window.requestAnimationFrame(step);
     }
 
-    // 计算昨天的年月日
     const today = new Date();
     let yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
@@ -327,7 +333,6 @@
             const latestDay = data[data.length - 1];
             const latestDayObj = parseDate(latestDay.date);
 
-            // ★ 核心修改：严格的年月日昨日校验
             if (!latestDayObj || latestDayObj.year !== yYear || latestDayObj.month !== yMonth || latestDayObj.day !== yDay) {
                 document.getElementById('empty-state').style.display = 'block';
                 return; 
@@ -336,32 +341,17 @@
             document.getElementById('empty-state').style.display = 'none';
             document.getElementById('data-content').style.display = 'block';
 
-            // 标题应用智能格式化
             document.getElementById('kpi-date-title').innerText = formatDateForDisplay(latestDay.date) + ' 营业额';
             animateValue("total-amount", 0, Number(latestDay.revenue), 1500);
 
-            initSelectOptions();
             changeChart('7days', document.querySelector('.tab-btn.active'));
         })
         .catch(error => {
             document.getElementById('empty-state').style.display = 'block';
         });
 
-    function initSelectOptions() {
-        const sel1 = document.getElementById('date-select-1');
-        const sel2 = document.getElementById('date-select-2');
-        sel1.innerHTML = ''; sel2.innerHTML = '';
-        for (let i = globalData.length - 1; i >= 0; i--) {
-            const rawDate = globalData[i].date;
-            const displayDate = formatDateForDisplay(rawDate);
-            sel1.innerHTML += `<option value="${rawDate}">${displayDate}</option>`;
-            sel2.innerHTML += `<option value="${rawDate}">${displayDate}</option>`;
-        }
-        if (globalData.length >= 2) { sel1.selectedIndex = 1; sel2.selectedIndex = 0; }
-    }
-
+    // ================= 核心图表更新逻辑 =================
     function changeChart(type, btnElement) {
-        document.getElementById('custom-compare-panel').style.display = 'none';
         if (btnElement) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
@@ -369,13 +359,20 @@
 
         let chartData = [];
         if (type === 'yesterday') {
-            chartData = [globalData[globalData.length - 1]];
+            // 只看昨日：只取昨天所在的月份数据，让图表有完整的线，但重点高亮昨天
+            const latest = globalData[globalData.length - 1];
+            const dObj = parseDate(latest.date);
+            chartData = globalData.filter(item => {
+                const iObj = parseDate(item.date);
+                return iObj && iObj.year === dObj.year && iObj.month === dObj.month;
+            });
             statsDisplay.innerHTML = ''; 
         } else if (type === '7days') {
+            // 近7天：取最后 7 条数据
             chartData = globalData.slice(-7);
             updateStats(chartData, '近7日');
         } else if (type === 'month') {
-            // ★ 本月的筛选，严格校验年份和月份
+            // 本月：严格按当前月份过滤
             chartData = globalData.filter(item => {
                 const dObj = parseDate(item.date);
                 return dObj && dObj.year === today.getFullYear() && dObj.month === (today.getMonth() + 1);
@@ -383,7 +380,59 @@
             if(chartData.length === 0) chartData = [globalData[globalData.length - 1]];
             updateStats(chartData, '本月');
         }
-        updateChartData(chartData);
+        renderChartDatasets(chartData, type);
+    }
+
+    function renderChartDatasets(dataArray, type) {
+        const monthGroups = {}; 
+        dataArray.forEach(item => {
+            const d = parseDate(item.date);
+            if (!d) return;
+            const key = `${d.year}-${d.month}`;
+            if (!monthGroups[key]) monthGroups[key] = { year: d.year, month: d.month, days: new Array(31).fill(null) };
+            monthGroups[key].days[d.day - 1] = item.revenue;
+        });
+
+        const datasets = [];
+        const sortedKeys = Object.keys(monthGroups).sort((a, b) => {
+            const [yA, mA] = a.split('-').map(Number);
+            const [yB, mB] = b.split('-').map(Number);
+            return (yA * 12 + mA) - (yB * 12 + mB);
+        });
+
+        // 获取昨天的天数，用于高亮
+        const latestDateStr = globalData[globalData.length - 1].date;
+        const latestObj = parseDate(latestDateStr);
+        const yesterdayDay = latestObj ? latestObj.day : -1;
+
+        sortedKeys.forEach((key, index) => {
+            const group = monthGroups[key];
+            
+            // 如果只是看昨日，把昨日的点变大变红突出显示
+            let pointRadius = new Array(31).fill(2);
+            let pointBgColors = new Array(31).fill(lineColors[index % lineColors.length]);
+            let pointHoverRadius = new Array(31).fill(6);
+
+            if (type === 'yesterday' && group.month === latestObj.month && group.year === latestObj.year) {
+                pointRadius[yesterdayDay - 1] = 6; // 昨天放大
+                pointBgColors[yesterdayDay - 1] = '#FF3B30'; // 昨天变红
+                pointHoverRadius[yesterdayDay - 1] = 9;
+            }
+
+            datasets.push({
+                label: `${group.year}年${group.month}月`,
+                data: group.days,
+                borderColor: lineColors[index % lineColors.length],
+                pointBackgroundColor: pointBgColors,
+                pointBorderColor: pointBgColors,
+                pointRadius: pointRadius,
+                pointHoverRadius: pointHoverRadius,
+                tension: 0.3, spanGaps: true, borderWidth: 2, fill: false
+            });
+        });
+
+        myChart.data.datasets = datasets;
+        myChart.update();
     }
 
     function updateStats(dataArray, prefix) {
@@ -398,42 +447,6 @@
         const avg = Math.round(total / dataArray.length);
         
         statsDisplay.innerHTML = `${prefix}总营业额: <span>$${total.toLocaleString()}</span><br>${prefix}平均日营业额: <span>$${avg.toLocaleString()}</span>`;
-    }
-
-    function toggleCustomCompare(btnElement) {
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        btnElement.classList.add('active');
-        document.getElementById('custom-compare-panel').style.display = 'flex';
-        statsDisplay.innerHTML = '';
-    }
-
-    function doCustomCompare() {
-        const date1 = document.getElementById('date-select-1').value;
-        const date2 = document.getElementById('date-select-2').value;
-        const data1 = globalData.find(item => item.date === date1);
-        const data2 = globalData.find(item => item.date === date2);
-
-        let compareData = [];
-        if(data1) compareData.push(data1);
-        if(data2 && date1 !== date2) compareData.push(data2); 
-        
-        // 用新函数解析时间戳进行排序
-        compareData.sort((a, b) => {
-            const tA = parseDate(a.date) ? new Date(parseDate(a.date).year, parseDate(a.date).month - 1, parseDate(a.date).day).getTime() : 0;
-            const tB = parseDate(b.date) ? new Date(parseDate(b.date).year, parseDate(b.date).month - 1, parseDate(b.date).day).getTime() : 0;
-            return tA - tB;
-        });
-        
-        statsDisplay.innerHTML = ''; 
-        updateChartData(compareData);
-    }
-
-    function updateChartData(dataArray) {
-        // 图表也应用智能日期显示
-        myChart.data.labels = dataArray.map(item => formatDateForDisplay(item.date));
-        myChart.data.datasets[0].data = dataArray.map(item => item.revenue);
-        myChart.data.datasets[0].backgroundColor = 'rgba(0, 122, 255, 0.6)';
-        myChart.update();
     }
 </script>
 </body>
