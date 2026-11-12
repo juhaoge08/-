@@ -27,13 +27,12 @@
 
         .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; justify-content: center; }
         .tab-btn { background: white; border: 1px solid #d2d2d7; color: #1d1d1f; padding: 8px 14px; border-radius: 20px; cursor: pointer; font-size: 13px; transition: 0.2s; }
-        .tab-btn.active { background: #007aff; color: white; border-color: #007aff; box-shadow: 0 4px 10px rgba(0,122,255,0.2); }
+        .tab-btn.active { background: #ff69b4; color: white; border-color: #ff69b4; box-shadow: 0 4px 10px rgba(255,105,180,0.3); }
 
-        /* 图表容器 */
         .chart-container { background: white; padding: 15px; padding-top: 25px; padding-bottom: 10px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 380px; margin-bottom: 10px; position: relative; }
         
         .stats-info { text-align: center; font-size: 16px; color: #1d1d1f; font-weight: 500; min-height: 20px; padding: 10px 0; line-height: 1.6; }
-        .stats-info span { color: #007aff; font-weight: 700; font-size: 18px; }
+        .stats-info span { color: #ff69b4; font-weight: 700; font-size: 18px; }
 
         /* ================= 悬浮日历核心区 ================= */
         .calendar-widget {
@@ -56,7 +55,7 @@
         .calendar-popup.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
         .calendar-popup::after { content: ''; position: absolute; top: -10px; right: 18px; border-width: 0 10px 10px; border-style: solid; border-color: transparent transparent #1d1d1f transparent; }
         .calendar-popup::before { content: ''; position: absolute; top: -7px; right: 20px; border-width: 0 8px 8px; border-style: solid; border-color: transparent transparent #ffffff transparent; z-index: 1; }
-        .calendar-text-tip { font-size: 13px; font-weight: bold; text-align: center; margin-bottom: 10px; color: #007aff; }
+        .calendar-text-tip { font-size: 13px; font-weight: bold; text-align: center; margin-bottom: 10px; color: #ff69b4; }
         .mini-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 12px; }
         .mini-calendar .weekday { color: #86868b; font-weight: bold; font-size: 11px; margin-bottom: 4px;}
         .mini-calendar .day { padding: 4px 0; border-radius: 50%; color: #1d1d1f; }
@@ -170,7 +169,6 @@
             interaction: { mode: 'index', intersect: false },
             layout: { padding: { top: 20, bottom: 20 } },
             onClick: (e, elements, chart) => {
-                // 支持点击任意位置显示数据
                 const canvasPosition = Chart.helpers.getRelativePosition(e, chart);
                 const xValue = chart.scales.x.getValueForPixel(canvasPosition.x);
                 if (xValue !== undefined) {
@@ -186,7 +184,7 @@
                 }
             },
             plugins: {
-                legend: { display: false }, // 单线图不需要图例
+                legend: { display: false },
                 tooltip: { 
                     backgroundColor: 'rgba(0,0,0,0.85)',
                     padding: 12,
@@ -356,46 +354,67 @@
             btnElement.classList.add('active');
         }
 
+        const latest = globalData[globalData.length - 1];
+        const latestRev = Number(latest.revenue);
+
         if (type === 'yesterday') {
-            const latest = globalData[globalData.length - 1];
-            const rev = Number(latest.revenue);
-            const day = parseDate(latest.date).day;
-            
-            myChart.data.labels = [day.toString()];
+            // 1. 依然截取近 7 天的数据，保证有“上一根线”连着，而不是孤零零一个点
+            const sliceData = globalData.slice(-7);
+            const labels = sliceData.map(item => parseDate(item.date).day.toString());
+            const data = sliceData.map(item => item.revenue);
+
+            myChart.data.labels = labels;
             myChart.data.datasets = [{
-                label: '昨日营业额',
-                data: [rev],
-                borderColor: '#FF69B4',
-                backgroundColor: 'rgba(255, 105, 180, 0.2)',
-                borderWidth: 4,
-                pointRadius: 10, // ★ 放大图标
-                pointHoverRadius: 14,
-                pointBorderColor: '#FF69B4',
-                pointBackgroundColor: '#fff',
-                showLine: false // ★ 不显示一整条折线
+                label: '近期营业额',
+                data: data,
+                borderColor: '#FF69B4', // 统一粉红色
+                backgroundColor: 'rgba(255, 105, 180, 0.1)',
+                borderWidth: 3,
+                pointRadius: data.map((val, idx) => idx === data.length - 1 ? 8 : 3), // 昨天的点放大
+                pointHoverRadius: 10,
+                pointBackgroundColor: data.map((val, idx) => idx === data.length - 1 ? '#FF69B4' : '#fff'),
+                tension: 0.3,
+                fill: true
             }];
+
+            // 2. Y 轴“美观基准线”算法
+            // 如果 yesterday 是 260 万，我们尽量让 250 万成为基准线
+            let step = 500000; // 50万
+            if (latestRev < 1000000) step = 100000; // 10万
+            else if (latestRev < 2000000) step = 200000; // 20万
+            else if (latestRev < 5000000) step = 500000; // 50万
+            else step = 1000000; // 100万
+
+            // 算出基础位（比如 260w 算出来就是 250w）
+            const base = Math.floor(latestRev / step) * step;
             
-            // ★ 细化Y轴，以昨日为中心
-            const step = Math.round(rev * 0.05); 
-            myChart.options.scales.y.min = rev - step * 2;
-            myChart.options.scales.y.max = rev + step * 2;
+            // 为了让 260w 在 250w 上方显得比较匀称，设 min 在 base 下方一档，max 在 base 上方两档
+            let minY = base - step;
+            let maxY = base + step * 2;
+            if (minY < 0) {
+                minY = 0;
+                maxY = base + step * 3;
+            }
+
+            myChart.options.scales.y.min = minY;
+            myChart.options.scales.y.max = maxY;
             myChart.options.scales.y.ticks.stepSize = step;
-            
             myChart.update();
+            
             statsDisplay.innerHTML = ''; 
 
         } else if (type === '7days') {
-            // ★ 包含昨日往前一共7天
+            // 包含昨日往前一共7天
             const sliceData = globalData.slice(-7);
             myChart.data.labels = sliceData.map(item => parseDate(item.date).day.toString());
             myChart.data.datasets = [{
                 label: '近7日营业额',
                 data: sliceData.map(item => item.revenue),
-                borderColor: '#007AFF',
-                backgroundColor: 'rgba(0, 122, 255, 0.1)',
+                borderColor: '#FF69B4', // 统一粉红色
+                backgroundColor: 'rgba(255, 105, 180, 0.1)',
                 pointRadius: 4,
                 pointHoverRadius: 8,
-                pointBackgroundColor: '#007AFF',
+                pointBackgroundColor: '#FF69B4',
                 tension: 0.3,
                 borderWidth: 2,
                 fill: true
@@ -410,7 +429,7 @@
             updateStats(sliceData, '近7日');
 
         } else if (type === 'month') {
-            // ★ 本月：只展示出现过数据的日期，不留白
+            // 本月：只展示出现过数据的日期，不留白
             const monthData = globalData.filter(item => {
                 const d = parseDate(item.date);
                 return d && d.year === today.getFullYear() && d.month === (today.getMonth() + 1);
@@ -443,11 +462,11 @@
             myChart.data.datasets = [{
                 label: '本月营业额',
                 data: data,
-                borderColor: '#34C759',
-                backgroundColor: 'rgba(52, 199, 89, 0.1)',
+                borderColor: '#FF69B4', // 统一粉红色
+                backgroundColor: 'rgba(255, 105, 180, 0.1)',
                 pointRadius: 3,
                 pointHoverRadius: 7,
-                pointBackgroundColor: '#34C759',
+                pointBackgroundColor: '#FF69B4',
                 tension: 0.3,
                 borderWidth: 2,
                 spanGaps: true,
