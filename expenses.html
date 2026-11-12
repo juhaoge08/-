@@ -214,4 +214,226 @@
 
         <!-- 第二行：旋钮 + 特定词条 -->
         <div class="extra-filters">
-            <div class="kn
+            <div class="knob-section">
+                <div class="knob-stage" id="knob-stage" role="button" tabindex="0"
+                     aria-label="切换隐藏规则：全部 / 不看PVS / 不看工资"
+                     onclick="cycleKnob()" onkeydown="knobKeydown(event)">
+                    <span class="knob-label" id="lbl-pvs" onclick="pickMode(event, 'noPvs')">不看PVS</span>
+                    <div class="knob-dial">
+                        <div class="knob-hand" id="knob-hand"></div>
+                    </div>
+                    <span class="knob-label" id="lbl-salary" onclick="pickMode(event, 'noSalary')">不看工资</span>
+                </div>
+                <div class="knob-status" id="knob-status">显示全部记录</div>
+            </div>
+
+            <select id="keyword-filter" class="keyword-select" onchange="filterExpenses()">
+                <option value="">所有特定词条</option>
+                <!-- 动态生成 -->
+            </select>
+        </div>
+
+        <!-- 第三行：按钮 -->
+        <div class="action-buttons">
+            <button class="filter-btn" onclick="filterExpenses()">查询</button>
+            <button class="reset-btn" onclick="resetExpenses()">重置</button>
+        </div>
+    </div>
+
+    <div class="expense-card">
+        <ul class="expense-list" id="expense-list">
+            <li class="no-expense">正在加载明细...</li>
+        </ul>
+    </div>
+</div>
+<script>
+    let globalExpenses = []; // 存储原始数据
+
+    /* ================= 旋钮状态 ================= */
+    // all = 显示全部 | noPvs = 不看PVS | noSalary = 不看工资
+    const KNOB_MODES = ['all', 'noPvs', 'noSalary'];
+    let currentMode = 'all';
+
+    function applyKnobVisual(mode) {
+        const hand = document.getElementById('knob-hand');
+        const lblPvs = document.getElementById('lbl-pvs');
+        const lblSalary = document.getElementById('lbl-salary');
+        const status = document.getElementById('knob-status');
+
+        // 指针旋转：顶部 = 全部，左侧 = 不看PVS，右侧 = 不看工资
+        if (mode === 'noPvs') {
+            hand.style.transform = 'rotate(-90deg)';
+        } else if (mode === 'noSalary') {
+            hand.style.transform = 'rotate(90deg)';
+        } else {
+            hand.style.transform = 'rotate(0deg)';
+        }
+
+        lblPvs.classList.toggle('active', mode === 'noPvs');
+        lblSalary.classList.toggle('active', mode === 'noSalary');
+
+        status.textContent = mode === 'noPvs'
+            ? '已隐藏 PVS 记录'
+            : mode === 'noSalary'
+                ? '已隐藏工资记录'
+                : '显示全部记录';
+    }
+
+    function setKnobMode(mode, applyFilter = true) {
+        currentMode = mode;
+        applyKnobVisual(mode);
+        if (applyFilter) filterExpenses();
+    }
+
+    // 点击旋钮：三档循环
+    function cycleKnob() {
+        const idx = KNOB_MODES.indexOf(currentMode);
+        setKnobMode(KNOB_MODES[(idx + 1) % KNOB_MODES.length]);
+    }
+
+    // 点击两侧标签：直接跳到该档（再点一次回到全部）
+    function pickMode(event, mode) {
+        event.stopPropagation();
+        setKnobMode(currentMode === mode ? 'all' : mode);
+    }
+
+    // 键盘无障碍支持
+    function knobKeydown(event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            cycleKnob();
+        }
+    }
+
+    /* ================= 日期解析 ================= */
+    function parseDateToTimestamp(dateStr) {
+        const match = dateStr.match(/(?:(\d+)年)?(\d+)月(\d+)日/);
+        if (match) {
+            const year = match[1] ? Number(match[1]) : new Date().getFullYear();
+            const month = Number(match[2]) - 1;
+            const day = Number(match[3]);
+            return new Date(year, month, day).getTime();
+        }
+        return 0;
+    }
+
+    /* ================= 渲染列表 ================= */
+    function renderList(dataArray) {
+        const listEl = document.getElementById('expense-list');
+        listEl.innerHTML = '';
+
+        if (dataArray && dataArray.length > 0) {
+            const sortedData = [...dataArray].sort((a, b) => {
+                const timeA = parseDateToTimestamp(a.date);
+                const timeB = parseDateToTimestamp(b.date);
+                return timeB - timeA;
+            });
+
+            sortedData.forEach(item => {
+                listEl.innerHTML += `
+                    <li class="expense-item">
+                        <div>
+                            <div class="expense-memo">${item.memo}</div>
+                            <span class="expense-date">${item.date}</span>
+                        </div>
+                        <div class="expense-amount">-$${Number(item.amount).toLocaleString()}</div>
+                    </li>
+                `;
+            });
+        } else {
+            listEl.innerHTML = '<li class="no-expense">没有找到符合条件的扣款记录～</li>';
+        }
+    }
+
+    /* ================= 初始化下拉框 ================= */
+    function initSelectOptions() {
+        const startSel = document.getElementById('start-date');
+        const endSel = document.getElementById('end-date');
+        const keywordSel = document.getElementById('keyword-filter');
+        startSel.innerHTML = ''; endSel.innerHTML = '';
+        keywordSel.innerHTML = '<option value="">所有特定词条</option>';
+
+        const uniqueDates = [...new Set(globalExpenses.map(item => item.date))];
+        uniqueDates.sort((a, b) => parseDateToTimestamp(a) - parseDateToTimestamp(b));
+
+        uniqueDates.forEach(date => {
+            startSel.innerHTML += `<option value="${date}">${date}</option>`;
+            endSel.innerHTML += `<option value="${date}">${date}</option>`;
+        });
+
+        if (uniqueDates.length > 0) {
+            startSel.value = uniqueDates[0];
+            endSel.value = uniqueDates[uniqueDates.length - 1];
+        }
+
+        // 提取所有不重复的 Memo 词条
+        const uniqueMemos = [...new Set(globalExpenses.map(item => item.memo))];
+        uniqueMemos.filter(m => m && m.trim() !== "").forEach(memo => {
+            keywordSel.innerHTML += `<option value="${memo}">${memo}</option>`;
+        });
+    }
+
+    /* ================= 加载数据 ================= */
+    fetch('expenses.json')
+        .then(response => response.json())
+        .then(expenses => {
+            if (expenses && expenses.length > 0) {
+                globalExpenses = expenses;
+                document.getElementById('filter-bar').style.display = 'flex';
+                initSelectOptions();
+                applyKnobVisual(currentMode);
+                renderList(globalExpenses);
+            } else {
+                document.getElementById('expense-list').innerHTML = '<li class="no-expense">近期无扣款记录，大王很节约～</li>';
+            }
+        })
+        .catch(err => {
+            document.getElementById('expense-list').innerHTML = '<li class="no-expense">读取失败，请检查 expenses.json</li>';
+        });
+
+    /* ================= 核心过滤逻辑 ================= */
+    function filterExpenses() {
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        const keyword = document.getElementById('keyword-filter').value;
+
+        let startTs = parseDateToTimestamp(startDate);
+        let endTs = parseDateToTimestamp(endDate);
+
+        if (startTs > endTs) {
+            [startTs, endTs] = [endTs, startTs];
+        }
+
+        const filteredData = globalExpenses.filter(item => {
+            const memoStr = (item.memo || '').toLowerCase();
+
+            // 1. 日期过滤
+            const ts = parseDateToTimestamp(item.date);
+            if (ts < startTs || ts > endTs) return false;
+
+            // 2. 旋钮：不看 PVS
+            if (currentMode === 'noPvs' && memoStr.includes('pvs')) return false;
+
+            // 3. 旋钮：不看工资
+            if (currentMode === 'noSalary' && memoStr.includes('工资')) return false;
+
+            // 4. 特定词条过滤
+            if (keyword && item.memo !== keyword) return false;
+
+            return true;
+        });
+
+        renderList(filteredData);
+    }
+
+    /* ================= 重置 ================= */
+    function resetExpenses() {
+        initSelectOptions();
+        setKnobMode('all', false);          // 旋钮回到“显示全部”
+        document.getElementById('keyword-filter').value = "";
+        renderList(globalExpenses);
+    }
+</script>
+
+</body>
+</html>
