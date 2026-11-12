@@ -29,39 +29,31 @@
         }
         .main-filter-btn:active { background: #f0f0f5; transform: scale(0.98); }
 
-        .chart-container { position: relative; background: white; padding: 15px; padding-top: 50px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 380px; margin-bottom: 10px; }
+        /* 图表容器 */
+        .chart-container { position: relative; background: white; padding: 15px; padding-top: 65px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 380px; margin-bottom: 10px; }
         
-        /* 图表右上角：开关 + 下拉组合控件 */
-        .chart-header { position: absolute; top: 12px; right: 15px; z-index: 10; }
+        /* ================= 右侧闹铃开关模块 ================= */
+        .chart-header { position: absolute; top: 15px; right: 15px; z-index: 10; }
+        .compare-widget { position: relative; display: flex; flex-direction: column; align-items: flex-start; }
         
-        .compare-controls {
-            display: flex; align-items: center; background: #f5f5f7; border: 1px solid #d2d2d7;
-            border-radius: 20px; padding: 4px 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        /* 顶部一行：文字 + 开关 + 箭头 */
+        .compare-main-row {
+            display: flex; align-items: center; gap: 8px;
         }
 
-        /* 闹铃开关样式 */
-        .switch { position: relative; display: inline-block; width: 40px; height: 22px; margin-right: 8px; }
+        .compare-label { font-size: 14px; color: #1d1d1f; font-weight: 600; }
+
+        /* iOS风格纯胶囊开关 */
+        .switch { position: relative; display: inline-block; width: 42px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #e5e5ea; transition: .3s; border-radius: 22px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px;
-            background-color: white; transition: .3s; border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        input:checked + .slider { background-color: #34c759; } /* 绿色打开 */
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e5e5ea; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: #34C759; }
         input:checked + .slider:before { transform: translateX(18px); }
 
-        /* 下拉箭头区域 */
-        .dropdown-wrapper { position: relative; display: flex; align-items: center; padding-left: 8px; border-left: 1px solid #d2d2d7; }
-        .dropdown-btn {
-            background: none; border: none; font-size: 10px; color: #86868b; cursor: pointer;
-            padding: 4px; display: flex; justify-content: center; align-items: center; outline: none;
-        }
-        
-        .arrow { display: inline-block; transition: transform 0.2s; }
+        /* 下拉箭头 */
+        .dropdown-trigger { cursor: pointer; padding: 4px; margin-left: 2px; display: flex; align-items: center; }
+        .arrow { font-size: 11px; color: #86868b; transition: transform 0.2s; }
         .arrow.bounce { animation: downBounce 0.4s cubic-bezier(0.28, 0.84, 0.42, 1); }
         @keyframes downBounce {
             0% { transform: translateY(0); }
@@ -69,12 +61,16 @@
             100% { transform: translateY(0); }
         }
 
+        /* 下方小字 */
+        .compare-subtext { font-size: 10px; color: #86868b; margin-top: 4px; margin-left: 2px; }
+
+        /* 下拉菜单 */
         .dropdown-menu {
-            position: absolute; top: 130%; right: -10px; background: white; border: 1px solid #e5e5ea;
+            position: absolute; top: 50px; right: 0; background: white; border: 1px solid #e5e5ea;
             border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); min-width: 150px;
             opacity: 0; pointer-events: none; transform: translateY(-10px);
             transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            overflow: hidden; max-height: 220px; overflow-y: auto; z-index: 20;
+            overflow: hidden; max-height: 200px; overflow-y: auto; z-index: 20;
         }
         .dropdown-menu.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
         
@@ -84,7 +80,6 @@
         }
         .dropdown-item:last-child { border-bottom: none; }
         .dropdown-item:hover { background: #f5f5f7; }
-        .dropdown-item.cancel-opt { color: #ff3b30; font-weight: 600; }
 
         .stats-info { text-align: center; font-size: 16px; color: #1d1d1f; font-weight: 500; min-height: 20px; padding: 10px 0; line-height: 1.6; }
         .stats-info span { color: #007aff; font-weight: 700; font-size: 18px; }
@@ -128,7 +123,7 @@
 
         @media (min-width: 500px) {
             .header h1 { padding-right: 0; }
-            .chart-container { height: 420px; }
+            .chart-container { height: 400px; }
         }
     </style>
 </head>
@@ -146,28 +141,31 @@
     </div>
 
     <div id="data-content" class="data-content">
-        <!-- 主筛选按钮 -->
         <button class="main-filter-btn" id="mainFilterBtn">
             📅 <span id="main-filter-text">选择日期范围</span>
         </button>
 
         <div class="chart-container">
-            <!-- 图表右上角：开关+下拉 -->
+            <!-- 右上角模块 -->
             <div class="chart-header">
-                <div class="compare-controls">
-                    <!-- 手机闹铃同款开关 -->
-                    <label class="switch">
-                        <input type="checkbox" id="compare-toggle" onchange="handleToggleChange(this)">
-                        <span class="slider"></span>
-                    </label>
-                    <!-- 下拉菜单箭头 -->
-                    <div class="dropdown-wrapper" id="dropdownWrapper">
-                        <button class="dropdown-btn" onclick="toggleDropdown(event)">
+                <div class="compare-widget" id="dropdownWrapper">
+                    <!-- 左字，中开关，右箭头 -->
+                    <div class="compare-main-row">
+                        <span class="compare-label" id="compare-label">与上月对比</span>
+                        <label class="switch">
+                            <input type="checkbox" id="compare-toggle" checked onchange="toggleCompareSwitch(this)">
+                            <span class="slider"></span>
+                        </label>
+                        <div class="dropdown-trigger" onclick="toggleDropdown(event)">
                             <span class="arrow" id="arrowIcon">▼</span>
-                        </button>
-                        <div class="dropdown-menu" id="dropdownMenu">
-                            <!-- JS动态生成 -->
                         </div>
+                    </div>
+                    <!-- 下方小字 -->
+                    <div class="compare-subtext">不想与上月对比？</div>
+                    
+                    <!-- 下拉菜单 -->
+                    <div class="dropdown-menu" id="dropdownMenu">
+                        <!-- JS动态生成 -->
                     </div>
                 </div>
             </div>
@@ -187,9 +185,7 @@
             <span id="calendar-title">加载中...</span>
             <button class="arrow-btn" onclick="changeMonth(1)">▶</button>
         </div>
-        <div class="calendar-grid" id="calendar-grid">
-            <!-- JS 动态生成 -->
-        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
         <div class="calendar-footer">
             <button id="btn-picker-start" class="date-pick-btn active" onclick="setActivePicker('start')">起始日</button>
             <button id="btn-picker-end" class="date-pick-btn" onclick="setActivePicker('end')">截止日</button>
@@ -199,25 +195,20 @@
 </div>
 
 <script>
-    // 14种对比区分度极高的颜色（第一条固定为粉色Hot Pink）
-    const lineColors = [
-        '#FF69B4', '#007AFF', '#34C759', '#FF9500', '#AF52DE', 
-        '#5856D6', '#FF3B30', '#FFCC00', '#5AC8FA', '#FF2D55', 
-        '#A2845E', '#00C7BE', '#8E8E93', '#FF9F0A'
-    ];
+    const lineColors = ['#FF69B4', '#007AFF', '#34C759', '#FF9500', '#AF52DE', '#5856D6', '#FF3B30', '#FFCC00', '#5AC8FA', '#FF2D55', '#A2845E', '#00C7BE', '#8E8E93', '#FF9F0A'];
 
     const ctx = document.getElementById('historyChart').getContext('2d');
     let historyChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: Array.from({length: 31}, (_, i) => i + 1), // 固定1-31
+            labels: Array.from({length: 31}, (_, i) => i + 1),
             datasets: []
         },
         options: {
             responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: {
-                legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 }, usePointStyle: true } },
+                legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, usePointStyle: true } },
                 tooltip: { 
                     callbacks: { 
                         title: function(context) { return context[0].label + ' 号'; },
@@ -225,14 +216,9 @@
                             let label = context.dataset.label || '';
                             if (label) label += ': ';
                             if (context.parsed.y !== null) {
-                                const val = context.parsed.y;
-                                // 提示数字转中文“万”
-                                if (val >= 10000) {
-                                    const num = Number((val / 10000).toFixed(1));
-                                    label += `$${num}万`;
-                                } else {
-                                    label += `$${val.toLocaleString()}`;
-                                }
+                                let valInWan = context.parsed.y / 10000;
+                                let formatted = valInWan.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+                                label += formatted + ' 万';
                             }
                             return label;
                         }
@@ -240,18 +226,18 @@
                 }
             },
             scales: {
-                x: { grid: { display: false } },
+                x: { 
+                    grid: { display: false },
+                    ticks: { autoSkip: false, maxRotation: 0, font: { size: 10 } }
+                },
                 y: { 
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
-                            // Y轴刻度转 w
-                            if (value >= 10000) {
-                                const num = Number((value / 10000).toFixed(1));
-                                return num + 'w';
-                            }
-                            return value;
-                        }
+                            if (value === 0) return '0';
+                            return (value / 10000) + 'w';
+                        },
+                        font: { size: 11 }
                     }
                 }
             }
@@ -261,18 +247,15 @@
     let globalData = []; 
     const statsDisplay = document.getElementById('stats-display');
 
-    // 日历与状态变量
     let currentCalDate = new Date(); 
     let filterStartObj = null;       
     let filterEndObj = null;         
     let activePicker = 'start';      
-    let currentCompareMonthKey = 'none'; // 默认开关关闭（无对比）
+    let currentCompareMonthKey = 'last_month';
 
     function parseDateToObj(dateStr) {
         const match = dateStr.match(/(?:(\d+)年)?(\d+)月(\d+)日/);
-        if (match) {
-            return { year: match[1] ? Number(match[1]) : new Date().getFullYear(), month: Number(match[2]) - 1, day: Number(match[3]) };
-        }
+        if (match) return { year: match[1] ? Number(match[1]) : new Date().getFullYear(), month: Number(match[2]) - 1, day: Number(match[3]) };
         return null;
     }
     function formatDateForDisplay(dateStr) {
@@ -287,41 +270,47 @@
         return obj.year === cY ? `${obj.month + 1}月${obj.day}日` : `${obj.year}年${obj.month + 1}月${obj.day}日`;
     }
 
-    // ================= 对比控制逻辑 =================
-    function toggleDropdown(e) {
-        if (e) e.stopPropagation();
-        const arrow = document.getElementById('arrowIcon');
-        arrow.classList.remove('bounce');
-        void arrow.offsetWidth; // 触发重排
-        arrow.classList.add('bounce');
-        document.getElementById('dropdownMenu').classList.toggle('show');
-    }
-
-    // 开关滑动事件
-    function handleToggleChange(checkbox) {
+    // ================= Switch 与 下拉交互 =================
+    function toggleCompareSwitch(checkbox) {
         if (checkbox.checked) {
-            // 如果打开时当前无对比，默认切到上月
-            if (currentCompareMonthKey === 'none') {
-                currentCompareMonthKey = 'last_month';
-            }
+            currentCompareMonthKey = 'last_month'; 
+            document.getElementById('compare-label').innerText = '与上月对比';
         } else {
             currentCompareMonthKey = 'none';
+            document.getElementById('compare-label').innerText = '无对比';
+            document.getElementById('dropdownMenu').classList.remove('show');
         }
         updateChartFromRange();
     }
 
-    function setCompareMode(mode) {
-        currentCompareMonthKey = mode;
+    function toggleDropdown(e) {
+        e.stopPropagation();
+        const checkbox = document.getElementById('compare-toggle');
         
-        // 联动更新开关状态
-        const toggle = document.getElementById('compare-toggle');
-        if (mode === 'none') {
-            toggle.checked = false;
-        } else {
-            toggle.checked = true;
+        // 如果开关是关的，点击箭头时默认自动开启并加载上个月
+        if (!checkbox.checked) {
+            checkbox.checked = true;
+            toggleCompareSwitch(checkbox);
         }
+        
+        const arrow = document.getElementById('arrowIcon');
+        arrow.classList.remove('bounce');
+        void arrow.offsetWidth;
+        arrow.classList.add('bounce');
+        
+        document.getElementById('dropdownMenu').classList.toggle('show');
+    }
 
+    function setCompareMode(mode, labelText) {
+        currentCompareMonthKey = mode;
+        document.getElementById('compare-label').innerText = labelText;
         document.getElementById('dropdownMenu').classList.remove('show');
+        
+        // 选了历史月份，确保开关是开着的
+        const checkbox = document.getElementById('compare-toggle');
+        if (!checkbox.checked) {
+            checkbox.checked = true;
+        }
         updateChartFromRange();
     }
 
@@ -332,7 +321,7 @@
         }).filter(Boolean))].sort((a,b) => {
             const [ya, ma] = a.split('-').map(Number);
             const [yb, mb] = b.split('-').map(Number);
-            return (yb * 12 + mb) - (ya * 12 + ma); // 倒序
+            return (yb * 12 + mb) - (ya * 12 + ma); 
         });
 
         const d = new Date();
@@ -340,18 +329,17 @@
         const lastMonthKey = `${d.getFullYear()}-${d.getMonth()}`;
 
         const menu = document.getElementById('dropdownMenu');
-        menu.innerHTML = '<div class="dropdown-item cancel-opt" onclick="setCompareMode(\'none\')">不想与本月对比</div>';
+        menu.innerHTML = ''; 
 
         allMonths.forEach(k => {
-            if (k !== lastMonthKey) { // 排除上月（因为滑动开关默认就是上月）
+            if (k !== lastMonthKey) { 
                 const [y, m] = k.split('-');
-                menu.innerHTML += `<div class="dropdown-item" onclick="setCompareMode('${k}')">与 ${y}年${Number(m)+1}月对比</div>`;
+                menu.innerHTML += `<div class="dropdown-item" onclick="setCompareMode('${k}', '与 ${y}年${Number(m)+1}月对比')">与 ${y}年${Number(m)+1}月对比</div>`;
             }
         });
     }
     // ====================================================
 
-    // 日历渲染
     function renderCalendar() {
         const year = currentCalDate.getFullYear();
         const month = currentCalDate.getMonth();
@@ -414,7 +402,6 @@
         renderCalendar();
     }
 
-    // 核心图表更新逻辑
     function updateChartFromRange() {
         if (!filterStartObj || !filterEndObj) return;
         const startTs = new Date(filterStartObj.year, filterStartObj.month, filterStartObj.day).getTime();
@@ -477,8 +464,8 @@
                     datasets.push({
                         label: `${group.year}年${group.month + 1}月 (对比)`,
                         data: group.days,
-                        borderColor: '#8E8E93', // 对比线固定灰色
-                        borderDash: [5, 5],     // 虚线区分
+                        borderColor: '#8E8E93', 
+                        borderDash: [5, 5],     
                         tension: 0.3, spanGaps: true, borderWidth: 2, pointRadius: 2, fill: false
                     });
                 }
@@ -498,7 +485,6 @@
         }
     }
 
-    // ================= 初始化 =================
     fetch('data.json')
         .then(response => response.json())
         .then(data => {
@@ -525,14 +511,13 @@
 
             updatePickerBtnText();
             renderCalendar();
-            initCompareDropdown();   // 初始化下拉菜单
+            initCompareDropdown(); 
             updateChartFromRange();
         })
         .catch(error => {
             document.getElementById('empty-state').style.display = 'block';
         });
 
-    // ================= 交互事件 =================
     document.getElementById('mainFilterBtn').addEventListener('click', () => {
         document.getElementById('calendarModal').classList.add('show');
     });
@@ -546,13 +531,11 @@
         if(e.target.id === 'calendarModal') confirmAndClose();
     });
 
-    // 点击其他地方关闭下拉菜单
     document.addEventListener('click', function(e) {
         if (!document.getElementById('dropdownWrapper').contains(e.target)) {
             document.getElementById('dropdownMenu').classList.remove('show');
         }
     });
-
 </script>
 </body>
 </html>
