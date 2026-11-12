@@ -29,7 +29,7 @@
         .tab-btn { background: white; border: 1px solid #d2d2d7; color: #1d1d1f; padding: 8px 14px; border-radius: 20px; cursor: pointer; font-size: 13px; transition: 0.2s; }
         .tab-btn.active { background: #007aff; color: white; border-color: #007aff; box-shadow: 0 4px 10px rgba(0,122,255,0.2); }
 
-        /* 调整图表容器，为底部的错位日期留空间 */
+        /* 图表容器 */
         .chart-container { background: white; padding: 15px; padding-top: 25px; padding-bottom: 10px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 380px; margin-bottom: 10px; position: relative; }
         
         .stats-info { text-align: center; font-size: 16px; color: #1d1d1f; font-weight: 500; min-height: 20px; padding: 10px 0; line-height: 1.6; }
@@ -37,8 +37,7 @@
 
         /* ================= 悬浮日历核心区 ================= */
         .calendar-widget {
-            position: fixed;
-            top: 75px; right: 15px; z-index: 9999;
+            position: fixed; top: 75px; right: 15px; z-index: 9999;
             display: flex; flex-direction: column; align-items: flex-end;
         }
         .calendar-icon {
@@ -74,7 +73,6 @@
 </head>
 <body>
 
-<!-- 悬浮日历挂件 -->
 <div class="calendar-widget">
     <div class="calendar-popup" id="calendarPopup">
         <div class="calendar-text-tip" id="dateTipText">加载中...</div>
@@ -117,26 +115,22 @@
 </div>
 
 <script>
-    // 14种区分度极高的颜色（第一条固定为粉色Hot Pink）
-    const lineColors = ['#FF69B4', '#007AFF', '#34C759', '#FF9500', '#AF52DE', '#5856D6', '#FF3B30', '#FFCC00', '#5AC8FA', '#FF2D55', '#A2845E', '#00C7BE', '#8E8E93', '#FF9F0A'];
-
-    // ================= 自定义 X 轴插件（单数在下，双数在上，虚线贯穿） =================
+    // ================= 动态 X 轴插件（单双数错位、虚线贯穿） =================
     const staggeredXAxis = {
         id: 'staggeredXAxis',
         afterDraw(chart) {
-            const { ctx, chartArea, scales: { x } } = chart;
-            if (!x || !chartArea) return;
+            const { ctx, chartArea, scales: { x }, data } = chart;
+            if (!x || !chartArea || !data.labels) return;
             
             ctx.save();
             ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.textAlign = 'center';
             
-            // 绘制极淡贯穿虚线
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.04)';
             ctx.lineWidth = 1;
             ctx.setLineDash([3, 3]);
             
-            for (let i = 0; i < 31; i++) {
+            for (let i = 0; i < data.labels.length; i++) {
                 const xPos = x.getPixelForTick(i);
                 if (xPos < chartArea.left || xPos > chartArea.right) continue;
                 
@@ -144,19 +138,14 @@
                 ctx.moveTo(xPos, chartArea.top);
                 ctx.lineTo(xPos, chartArea.bottom);
                 ctx.stroke();
-            }
-            
-            // 写字
-            ctx.setLineDash([]);
-            ctx.fillStyle = '#86868b';
-            
-            for (let i = 0; i < 31; i++) {
-                const label = i + 1;
-                const xPos = x.getPixelForTick(i);
-                if (xPos < chartArea.left || xPos > chartArea.right) continue;
                 
-                const isOdd = label % 2 !== 0;
-                // 单数靠底，双数靠顶
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#86868b';
+                
+                const label = data.labels[i];
+                const num = Number(label);
+                const isOdd = !isNaN(num) ? num % 2 !== 0 : i % 2 === 0;
+                
                 if (isOdd) {
                     ctx.textBaseline = 'top';
                     ctx.fillText(label, xPos, chartArea.bottom + 6);
@@ -164,6 +153,7 @@
                     ctx.textBaseline = 'bottom';
                     ctx.fillText(label, xPos, chartArea.top - 6);
                 }
+                ctx.setLineDash([3, 3]);
             }
             ctx.restore();
         }
@@ -172,37 +162,46 @@
     const ctx = document.getElementById('myChart').getContext('2d');
     let myChart = new Chart(ctx, {
         type: 'line',
-        data: {
-            labels: Array.from({length: 31}, (_, i) => i + 1), // 固定 1-31
-            datasets: []
-        },
+        data: { labels: [], datasets: [] },
         plugins: [staggeredXAxis],
         options: {
             responsive: true, 
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             layout: { padding: { top: 20, bottom: 20 } },
+            onClick: (e, elements, chart) => {
+                // 支持点击任意位置显示数据
+                const canvasPosition = Chart.helpers.getRelativePosition(e, chart);
+                const xValue = chart.scales.x.getValueForPixel(canvasPosition.x);
+                if (xValue !== undefined) {
+                    const index = Math.round(xValue);
+                    if (index >= 0 && index < chart.data.labels.length) {
+                        chart.tooltip.setActiveElements(
+                            chart.data.datasets.map((ds, i) => ({ datasetIndex: i, index: index })),
+                            { x: canvasPosition.x, y: canvasPosition.y }
+                        );
+                        chart.tooltip.update();
+                        chart.draw();
+                    }
+                }
+            },
             plugins: {
-                legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, usePointStyle: true } },
+                legend: { display: false }, // 单线图不需要图例
                 tooltip: { 
                     backgroundColor: 'rgba(0,0,0,0.85)',
                     padding: 12,
                     titleFont: { size: 14 },
                     bodyFont: { size: 13 },
-                    displayColors: true,
+                    displayColors: false,
                     callbacks: { 
                         title: function(context) { return '📅 ' + context[0].label + ' 号 营业额'; },
                         label: function(context) {
-                            let label = context.dataset.label || '';
-                            if (label) label += ': ';
                             if (context.parsed.y !== null) {
                                 let valInWan = context.parsed.y / 10000;
                                 let formatted = valInWan.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
-                                label += formatted + ' 万';
-                            } else {
-                                label += '无数据';
+                                return ' $' + formatted + ' 万';
                             }
-                            return label;
+                            return ' 无数据';
                         }
                     } 
                 }
@@ -210,7 +209,7 @@
             scales: {
                 x: { 
                     grid: { display: false },
-                    ticks: { display: false } // 用插件画
+                    ticks: { display: false }
                 },
                 y: { 
                     beginAtZero: true,
@@ -357,82 +356,111 @@
             btnElement.classList.add('active');
         }
 
-        let chartData = [];
         if (type === 'yesterday') {
-            // 只看昨日：只取昨天所在的月份数据，让图表有完整的线，但重点高亮昨天
             const latest = globalData[globalData.length - 1];
-            const dObj = parseDate(latest.date);
-            chartData = globalData.filter(item => {
-                const iObj = parseDate(item.date);
-                return iObj && iObj.year === dObj.year && iObj.month === dObj.month;
-            });
-            statsDisplay.innerHTML = ''; 
-        } else if (type === '7days') {
-            // 近7天：取最后 7 条数据
-            chartData = globalData.slice(-7);
-            updateStats(chartData, '近7日');
-        } else if (type === 'month') {
-            // 本月：严格按当前月份过滤
-            chartData = globalData.filter(item => {
-                const dObj = parseDate(item.date);
-                return dObj && dObj.year === today.getFullYear() && dObj.month === (today.getMonth() + 1);
-            });
-            if(chartData.length === 0) chartData = [globalData[globalData.length - 1]];
-            updateStats(chartData, '本月');
-        }
-        renderChartDatasets(chartData, type);
-    }
-
-    function renderChartDatasets(dataArray, type) {
-        const monthGroups = {}; 
-        dataArray.forEach(item => {
-            const d = parseDate(item.date);
-            if (!d) return;
-            const key = `${d.year}-${d.month}`;
-            if (!monthGroups[key]) monthGroups[key] = { year: d.year, month: d.month, days: new Array(31).fill(null) };
-            monthGroups[key].days[d.day - 1] = item.revenue;
-        });
-
-        const datasets = [];
-        const sortedKeys = Object.keys(monthGroups).sort((a, b) => {
-            const [yA, mA] = a.split('-').map(Number);
-            const [yB, mB] = b.split('-').map(Number);
-            return (yA * 12 + mA) - (yB * 12 + mB);
-        });
-
-        // 获取昨天的天数，用于高亮
-        const latestDateStr = globalData[globalData.length - 1].date;
-        const latestObj = parseDate(latestDateStr);
-        const yesterdayDay = latestObj ? latestObj.day : -1;
-
-        sortedKeys.forEach((key, index) => {
-            const group = monthGroups[key];
+            const rev = Number(latest.revenue);
+            const day = parseDate(latest.date).day;
             
-            // 如果只是看昨日，把昨日的点变大变红突出显示
-            let pointRadius = new Array(31).fill(2);
-            let pointBgColors = new Array(31).fill(lineColors[index % lineColors.length]);
-            let pointHoverRadius = new Array(31).fill(6);
+            myChart.data.labels = [day.toString()];
+            myChart.data.datasets = [{
+                label: '昨日营业额',
+                data: [rev],
+                borderColor: '#FF69B4',
+                backgroundColor: 'rgba(255, 105, 180, 0.2)',
+                borderWidth: 4,
+                pointRadius: 10, // ★ 放大图标
+                pointHoverRadius: 14,
+                pointBorderColor: '#FF69B4',
+                pointBackgroundColor: '#fff',
+                showLine: false // ★ 不显示一整条折线
+            }];
+            
+            // ★ 细化Y轴，以昨日为中心
+            const step = Math.round(rev * 0.05); 
+            myChart.options.scales.y.min = rev - step * 2;
+            myChart.options.scales.y.max = rev + step * 2;
+            myChart.options.scales.y.ticks.stepSize = step;
+            
+            myChart.update();
+            statsDisplay.innerHTML = ''; 
 
-            if (type === 'yesterday' && group.month === latestObj.month && group.year === latestObj.year) {
-                pointRadius[yesterdayDay - 1] = 6; // 昨天放大
-                pointBgColors[yesterdayDay - 1] = '#FF3B30'; // 昨天变红
-                pointHoverRadius[yesterdayDay - 1] = 9;
+        } else if (type === '7days') {
+            // ★ 包含昨日往前一共7天
+            const sliceData = globalData.slice(-7);
+            myChart.data.labels = sliceData.map(item => parseDate(item.date).day.toString());
+            myChart.data.datasets = [{
+                label: '近7日营业额',
+                data: sliceData.map(item => item.revenue),
+                borderColor: '#007AFF',
+                backgroundColor: 'rgba(0, 122, 255, 0.1)',
+                pointRadius: 4,
+                pointHoverRadius: 8,
+                pointBackgroundColor: '#007AFF',
+                tension: 0.3,
+                borderWidth: 2,
+                fill: true
+            }];
+            
+            // 恢复正常Y轴
+            myChart.options.scales.y.min = 0;
+            myChart.options.scales.y.max = undefined;
+            myChart.options.scales.y.ticks.stepSize = undefined;
+            
+            myChart.update();
+            updateStats(sliceData, '近7日');
+
+        } else if (type === 'month') {
+            // ★ 本月：只展示出现过数据的日期，不留白
+            const monthData = globalData.filter(item => {
+                const d = parseDate(item.date);
+                return d && d.year === today.getFullYear() && d.month === (today.getMonth() + 1);
+            });
+            
+            if (monthData.length === 0) {
+                myChart.data.labels = [];
+                myChart.data.datasets = [];
+                myChart.update();
+                statsDisplay.innerHTML = '本月暂无数据';
+                return;
             }
 
-            datasets.push({
-                label: `${group.year}年${group.month}月`,
-                data: group.days,
-                borderColor: lineColors[index % lineColors.length],
-                pointBackgroundColor: pointBgColors,
-                pointBorderColor: pointBgColors,
-                pointRadius: pointRadius,
-                pointHoverRadius: pointHoverRadius,
-                tension: 0.3, spanGaps: true, borderWidth: 2, fill: false
+            let maxDay = parseDate(monthData[monthData.length - 1].date).day;
+            const dataMap = {};
+            monthData.forEach(item => {
+                const d = parseDate(item.date).day;
+                dataMap[d] = item.revenue;
             });
-        });
-
-        myChart.data.datasets = datasets;
-        myChart.update();
+            
+            const labels = [];
+            const data = [];
+            // 只生成到最新一天，后面的不画
+            for (let i = 1; i <= maxDay; i++) {
+                labels.push(i.toString());
+                data.push(dataMap[i] !== undefined ? dataMap[i] : null);
+            }
+            
+            myChart.data.labels = labels;
+            myChart.data.datasets = [{
+                label: '本月营业额',
+                data: data,
+                borderColor: '#34C759',
+                backgroundColor: 'rgba(52, 199, 89, 0.1)',
+                pointRadius: 3,
+                pointHoverRadius: 7,
+                pointBackgroundColor: '#34C759',
+                tension: 0.3,
+                borderWidth: 2,
+                spanGaps: true,
+                fill: true
+            }];
+            
+            myChart.options.scales.y.min = 0;
+            myChart.options.scales.y.max = undefined;
+            myChart.options.scales.y.ticks.stepSize = undefined;
+            
+            myChart.update();
+            updateStats(monthData, '本月');
+        }
     }
 
     function updateStats(dataArray, prefix) {
