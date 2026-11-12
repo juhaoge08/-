@@ -30,30 +30,21 @@
         .main-filter-btn:active { background: #f0f0f5; transform: scale(0.98); }
 
         /* 图表容器 */
-        .chart-container { position: relative; background: white; padding: 15px; padding-top: 65px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 380px; margin-bottom: 10px; }
+        .chart-container { position: relative; background: white; padding: 15px; padding-top: 65px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 400px; margin-bottom: 10px; }
         
         /* ================= 右侧闹铃开关模块 ================= */
         .chart-header { position: absolute; top: 15px; right: 15px; z-index: 10; }
-        .compare-widget { position: relative; display: flex; flex-direction: column; align-items: flex-start; }
         
-        /* 顶部一行：文字 + 开关 + 箭头 */
-        .compare-main-row {
-            display: flex; align-items: center; gap: 8px;
-        }
-
-        .compare-label { font-size: 14px; color: #1d1d1f; font-weight: 600; }
-
-        /* iOS风格纯胶囊开关 */
-        .switch { position: relative; display: inline-block; width: 42px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e5e5ea; transition: .4s; border-radius: 24px; }
-        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        input:checked + .slider { background-color: #34C759; }
-        input:checked + .slider:before { transform: translateX(18px); }
+        /* 外层容器，整体靠右对齐 */
+        .compare-widget { position: relative; display: flex; flex-direction: column; align-items: flex-end; }
+        
+        /* 第一行：左字 + 箭头 + 开关 */
+        .compare-main-row { display: flex; align-items: center; gap: 6px; }
+        .compare-label { font-size: 13px; color: #1d1d1f; font-weight: 600; }
 
         /* 下拉箭头 */
-        .dropdown-trigger { cursor: pointer; padding: 4px; margin-left: 2px; display: flex; align-items: center; }
-        .arrow { font-size: 11px; color: #86868b; transition: transform 0.2s; }
+        .dropdown-trigger { cursor: pointer; padding: 2px 4px; display: flex; align-items: center; justify-content: center; }
+        .arrow { font-size: 10px; color: #86868b; transition: transform 0.2s; }
         .arrow.bounce { animation: downBounce 0.4s cubic-bezier(0.28, 0.84, 0.42, 1); }
         @keyframes downBounce {
             0% { transform: translateY(0); }
@@ -61,8 +52,16 @@
             100% { transform: translateY(0); }
         }
 
-        /* 下方小字 */
-        .compare-subtext { font-size: 10px; color: #86868b; margin-top: 4px; margin-left: 2px; }
+        /* iOS风格胶囊开关 */
+        .switch { position: relative; display: inline-block; width: 42px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e5e5ea; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: #34C759; }
+        input:checked + .slider:before { transform: translateX(18px); }
+
+        /* 第二行：小字靠右对齐 */
+        .compare-subtext { font-size: 10px; color: #86868b; margin-top: 4px; margin-right: 2px; }
 
         /* 下拉菜单 */
         .dropdown-menu {
@@ -123,7 +122,7 @@
 
         @media (min-width: 500px) {
             .header h1 { padding-right: 0; }
-            .chart-container { height: 400px; }
+            .chart-container { height: 420px; }
         }
     </style>
 </head>
@@ -149,19 +148,19 @@
             <!-- 右上角模块 -->
             <div class="chart-header">
                 <div class="compare-widget" id="dropdownWrapper">
-                    <!-- 左字，中开关，右箭头 -->
+                    <!-- 第一行 -->
                     <div class="compare-main-row">
                         <span class="compare-label" id="compare-label">与上月对比</span>
+                        <div class="dropdown-trigger" onclick="toggleDropdown(event)">
+                            <span class="arrow" id="arrowIcon">▼</span>
+                        </div>
                         <label class="switch">
                             <input type="checkbox" id="compare-toggle" checked onchange="toggleCompareSwitch(this)">
                             <span class="slider"></span>
                         </label>
-                        <div class="dropdown-trigger" onclick="toggleDropdown(event)">
-                            <span class="arrow" id="arrowIcon">▼</span>
-                        </div>
                     </div>
-                    <!-- 下方小字 -->
-                    <div class="compare-subtext">不想与上月对比？</div>
+                    <!-- 第二行小字 -->
+                    <div class="compare-subtext">不想与本月对比？</div>
                     
                     <!-- 下拉菜单 -->
                     <div class="dropdown-menu" id="dropdownMenu">
@@ -197,6 +196,46 @@
 <script>
     const lineColors = ['#FF69B4', '#007AFF', '#34C759', '#FF9500', '#AF52DE', '#5856D6', '#FF3B30', '#FFCC00', '#5AC8FA', '#FF2D55', '#A2845E', '#00C7BE', '#8E8E93', '#FF9F0A'];
 
+    // ================= 自定义 X 轴插件：单数在上、双数在下，极淡虚线连接 =================
+    const staggeredXAxis = {
+        id: 'staggeredXAxis',
+        afterDraw(chart) {
+            const { ctx, chartArea, scales: { x } } = chart;
+            if (!x || !chartArea) return;
+            
+            ctx.save();
+            ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = '#86868b';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.06)'; // 极淡虚线
+            ctx.setLineDash([2, 2]);
+            
+            const oddY = chartArea.bottom + 10;  // 单数在上方
+            const evenY = chartArea.bottom + 28; // 双数在下方
+            
+            for (let i = 0; i < 31; i++) {
+                const label = i + 1;
+                const xPos = x.getPixelForTick(i);
+                
+                if (xPos < chartArea.left || xPos > chartArea.right) continue;
+                
+                const isOdd = label % 2 !== 0;
+                const yPos = isOdd ? oddY : evenY;
+                
+                // 画虚线连接
+                ctx.beginPath();
+                ctx.moveTo(xPos, chartArea.bottom);
+                ctx.lineTo(xPos, yPos);
+                ctx.stroke();
+                
+                // 写字
+                ctx.fillText(label, xPos, yPos + 2);
+            }
+            ctx.restore();
+        }
+    };
+
     const ctx = document.getElementById('historyChart').getContext('2d');
     let historyChart = new Chart(ctx, {
         type: 'line',
@@ -204,9 +243,13 @@
             labels: Array.from({length: 31}, (_, i) => i + 1),
             datasets: []
         },
+        plugins: [staggeredXAxis], // 注册插件
         options: {
             responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
+            layout: {
+                padding: { bottom: 45 } // 为错位的 X 轴留出空间
+            },
             plugins: {
                 legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, usePointStyle: true } },
                 tooltip: { 
@@ -228,7 +271,7 @@
             scales: {
                 x: { 
                     grid: { display: false },
-                    ticks: { autoSkip: false, maxRotation: 0, font: { size: 10 } }
+                    ticks: { display: false } // 关闭自带的 X 轴标签，避免重叠
                 },
                 y: { 
                     beginAtZero: true,
@@ -270,7 +313,7 @@
         return obj.year === cY ? `${obj.month + 1}月${obj.day}日` : `${obj.year}年${obj.month + 1}月${obj.day}日`;
     }
 
-    // ================= Switch 与 下拉交互 =================
+    // ================= 开关与下拉交互 =================
     function toggleCompareSwitch(checkbox) {
         if (checkbox.checked) {
             currentCompareMonthKey = 'last_month'; 
@@ -287,7 +330,7 @@
         e.stopPropagation();
         const checkbox = document.getElementById('compare-toggle');
         
-        // 如果开关是关的，点击箭头时默认自动开启并加载上个月
+        // 开启下拉时，如果开关是关的，自动帮他打开
         if (!checkbox.checked) {
             checkbox.checked = true;
             toggleCompareSwitch(checkbox);
@@ -306,11 +349,9 @@
         document.getElementById('compare-label').innerText = labelText;
         document.getElementById('dropdownMenu').classList.remove('show');
         
-        // 选了历史月份，确保开关是开着的
         const checkbox = document.getElementById('compare-toggle');
-        if (!checkbox.checked) {
-            checkbox.checked = true;
-        }
+        if (!checkbox.checked) checkbox.checked = true;
+        
         updateChartFromRange();
     }
 
@@ -324,6 +365,8 @@
             return (yb * 12 + mb) - (ya * 12 + ma); 
         });
 
+        const now = new Date();
+        const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
         const d = new Date();
         d.setMonth(d.getMonth() - 1);
         const lastMonthKey = `${d.getFullYear()}-${d.getMonth()}`;
@@ -332,7 +375,8 @@
         menu.innerHTML = ''; 
 
         allMonths.forEach(k => {
-            if (k !== lastMonthKey) { 
+            // 排除本月(数据就是本月) 和 上个月(默认就是对比上个月)
+            if (k !== lastMonthKey && k !== currentMonthKey) { 
                 const [y, m] = k.split('-');
                 menu.innerHTML += `<div class="dropdown-item" onclick="setCompareMode('${k}', '与 ${y}年${Number(m)+1}月对比')">与 ${y}年${Number(m)+1}月对比</div>`;
             }
@@ -440,7 +484,6 @@
             });
         });
 
-        // 追加对比月
         if (currentCompareMonthKey !== 'none') {
             let targetKey = currentCompareMonthKey;
             if (targetKey === 'last_month') {
