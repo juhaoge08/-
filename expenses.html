@@ -95,7 +95,7 @@
         .expense-amount { color: #ff3b30; font-weight: bold; font-size: 18px; }
         .no-expense { color: #a1a1a6; font-size: 14px; text-align: center; padding: 30px 0; }
     </style>
-    </head>
+</head>
 <body>
 
 <div class="container">
@@ -143,6 +143,7 @@
         </ul>
     </div>
 </div>
+
 <script>
     let globalExpenses = [];
 
@@ -202,7 +203,7 @@
         return 0;
     }
 
-    /* ===== 渲染 ===== */
+    /* ===== 渲染列表 ===== */
     function renderList(dataArray) {
         const listEl = document.getElementById('expense-list');
         listEl.innerHTML = '';
@@ -306,29 +307,6 @@
                 }
             }
 
-            return true;
-        });
-
-        renderList(filteredData);
-    }
-
-    /* ===== 重置 ===== */
-    function resetExpenses() {
-        initSelectOptions();
-        setKnobMode('all', false);
-        document.getElementById('keyword-filter').value = "";
-        renderList(globalExpenses);
-    }
-</script>
-
-</body>
-</html>        const filteredData = globalExpenses.filter(item => {
-            const memoStr = (item.memo || '').toLowerCase();
-            const ts = parseDateToTimestamp(item.date);
-            if (ts < startTs || ts > endTs) return false;
-            if ((currentMode === 'noPvs' || currentMode === 'noBoth') && memoStr.includes('pvs')) return false;
-            if ((currentMode === 'noSalary' || currentMode === 'noBoth') && memoStr.includes('工资')) return false;
-            if (keyword && item.memo !== keyword) return false;
             return true;
         });
 
