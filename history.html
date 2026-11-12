@@ -20,7 +20,6 @@
 
         .data-content { display: none; } 
         
-        /* 主筛选按钮 */
         .main-filter-btn {
             width: 100%; background: white; border: 1px solid #d2d2d7; padding: 14px;
             border-radius: 15px; font-size: 15px; font-weight: bold; color: #007aff;
@@ -29,14 +28,12 @@
         }
         .main-filter-btn:active { background: #f0f0f5; transform: scale(0.98); }
 
-        /* 图表容器，给底部留空间给错位的数字 */
-        .chart-container { position: relative; background: white; padding: 15px; padding-top: 65px; padding-bottom: 50px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 420px; margin-bottom: 10px; }
+        /* 图表容器：顶部留白给双数，底部留白给单数 */
+        .chart-container { position: relative; background: white; padding: 15px; padding-top: 65px; padding-bottom: 10px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 420px; margin-bottom: 10px; }
         
         /* ================= 右侧模块 ================= */
         .chart-header { position: absolute; top: 15px; right: 15px; z-index: 10; }
         .compare-widget { position: relative; display: flex; flex-direction: column; align-items: flex-end; }
-        
-        /* 第一行：文字 + 开关 */
         .compare-main-row { display: flex; align-items: center; gap: 8px; }
         .compare-label { font-size: 13px; color: #1d1d1f; font-weight: 600; }
 
@@ -60,7 +57,6 @@
         input:checked + .slider { background-color: #34C759; }
         input:checked + .slider:before { transform: translateX(18px); }
 
-        /* 下拉菜单 */
         .dropdown-menu {
             position: absolute; top: 55px; right: 0; background: white; border: 1px solid #e5e5ea;
             border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); min-width: 150px;
@@ -79,7 +75,7 @@
         .stats-info { text-align: center; font-size: 16px; color: #1d1d1f; font-weight: 500; min-height: 20px; padding: 10px 0; line-height: 1.6; }
         .stats-info span { color: #007aff; font-weight: 700; font-size: 18px; }
 
-        /* ================= 日历弹窗模态框 ================= */
+        /* ================= 日历弹窗 ================= */
         .calendar-modal {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;
@@ -132,10 +128,8 @@
         </button>
 
         <div class="chart-container">
-            <!-- 右上角模块 -->
             <div class="chart-header">
                 <div class="compare-widget" id="dropdownWrapper">
-                    <!-- 第一行 -->
                     <div class="compare-main-row">
                         <span class="compare-label" id="compare-label">与上月对比</span>
                         <label class="switch">
@@ -143,18 +137,15 @@
                             <span class="slider"></span>
                         </label>
                     </div>
-                    <!-- 第二行 -->
                     <div class="compare-sub-row">
                         <span class="compare-subtext">不想与本月对比？</span>
                         <div class="dropdown-trigger" onclick="toggleDropdown(event)">
                             <span class="arrow" id="arrowIcon">▼</span>
                         </div>
                     </div>
-                    <!-- 下拉菜单 -->
                     <div class="dropdown-menu" id="dropdownMenu"></div>
                 </div>
             </div>
-
             <canvas id="historyChart"></canvas>
         </div>
 
@@ -162,9 +153,8 @@
     </div>
 </div>
 
-<!-- 日历弹窗 -->
 <div class="calendar-modal" id="calendarModal">
-    <div class="calendar-popup-content" id="calendarPopupContent">
+    <div class="calendar-popup-content">
         <div class="calendar-header">
             <button class="arrow-btn" onclick="changeMonth(-1)">◀</button>
             <span id="calendar-title">加载中...</span>
@@ -182,7 +172,7 @@
 <script>
     const lineColors = ['#FF69B4', '#007AFF', '#34C759', '#FF9500', '#AF52DE', '#5856D6', '#FF3B30', '#FFCC00', '#5AC8FA', '#FF2D55', '#A2845E', '#00C7BE', '#8E8E93', '#FF9F0A'];
 
-    // ================= 自定义 X 轴插件 =================
+    // ================= X轴插件：单数在底，双数在顶，虚线贯穿 =================
     const staggeredXAxis = {
         id: 'staggeredXAxis',
         afterDraw(chart) {
@@ -192,26 +182,6 @@
             ctx.save();
             ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.textAlign = 'center';
-            ctx.textBaseline = 'top';
-            
-            // 绘制从图表底部贯穿的极淡虚线
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([3, 3]);
-            
-            for (let i = 0; i < 31; i++) {
-                const xPos = x.getPixelForTick(i);
-                if (xPos < chartArea.left || xPos > chartArea.right) continue;
-                
-                ctx.beginPath();
-                ctx.moveTo(xPos, chartArea.top);
-                ctx.lineTo(xPos, chartArea.bottom + 35); // 向下延伸到文字下方
-                ctx.stroke();
-            }
-            
-            // 取消虚线，开始画数字
-            ctx.setLineDash([]);
-            ctx.fillStyle = '#86868b';
             
             for (let i = 0; i < 31; i++) {
                 const label = i + 1;
@@ -219,19 +189,30 @@
                 if (xPos < chartArea.left || xPos > chartArea.right) continue;
                 
                 const isOdd = label % 2 !== 0;
-                // 单数靠上，双数靠下
-                const yPos = isOdd ? chartArea.bottom + 8 : chartArea.bottom + 24; 
                 
-                ctx.fillText(label, xPos, yPos);
+                // 画极淡虚线（从最顶到最底）
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.04)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([3, 3]);
+                ctx.beginPath();
+                ctx.moveTo(xPos, chartArea.top);
+                ctx.lineTo(xPos, chartArea.bottom);
+                ctx.stroke();
+                
+                // 写字
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#86868b';
+                
+                if (isOdd) {
+                    // 单数：在图表最底部（0起始点）
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(label, xPos, chartArea.bottom + 6);
+                } else {
+                    // 双数：在图表最上方
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(label, xPos, chartArea.top - 6);
+                }
             }
-            
-            // 画一条图表底部的底线
-            ctx.beginPath();
-            ctx.strokeStyle = '#e5e5ea';
-            ctx.moveTo(chartArea.left, chartArea.bottom);
-            ctx.lineTo(chartArea.right, chartArea.bottom);
-            ctx.stroke();
-            
             ctx.restore();
         }
     };
@@ -247,36 +228,36 @@
         options: {
             responsive: true, 
             maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false }, // 悬停/点击整列
+            interaction: { mode: 'index', intersect: false }, 
             layout: {
-                padding: { bottom: 40 } // 给底部数字错位留空间
+                padding: { top: 20, bottom: 20 } // 上下留白给数字
             },
-            onClick: (e) => {
-                // 强制用户点击时展示 tooltip
-                const canvasPosition = Chart.helpers.getRelativePosition(e, historyChart);
-                const xValue = historyChart.scales.x.getValueForPixel(canvasPosition.x);
+            onClick: (e, elements, chart) => {
+                // ★ 核心功能：点击任意位置，锁定显示该日期所有月份的金额
+                const canvasPosition = Chart.helpers.getRelativePosition(e, chart);
+                const xValue = chart.scales.x.getValueForPixel(canvasPosition.x);
                 if (xValue !== undefined) {
                     const index = Math.round(xValue);
                     if (index >= 0 && index < 31) {
-                        historyChart.tooltip.setActiveElements(
-                            historyChart.data.datasets.map((ds, i) => ({ datasetIndex: i, index: index })),
+                        chart.tooltip.setActiveElements(
+                            chart.data.datasets.map((ds, i) => ({ datasetIndex: i, index: index })),
                             { x: canvasPosition.x, y: canvasPosition.y }
                         );
-                        historyChart.tooltip.update();
-                        historyChart.draw();
+                        chart.tooltip.update();
+                        chart.draw();
                     }
                 }
             },
             plugins: {
                 legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, usePointStyle: true } },
                 tooltip: { 
-                    backgroundColor: 'rgba(0,0,0,0.8)',
-                    padding: 10,
+                    backgroundColor: 'rgba(0,0,0,0.85)',
+                    padding: 12,
                     titleFont: { size: 14 },
                     bodyFont: { size: 13 },
                     displayColors: true,
                     callbacks: { 
-                        title: function(context) { return context[0].label + ' 号'; },
+                        title: function(context) { return '📅 ' + context[0].label + ' 号 营业额'; },
                         label: function(context) {
                             let label = context.dataset.label || '';
                             if (label) label += ': ';
@@ -284,6 +265,8 @@
                                 let valInWan = context.parsed.y / 10000;
                                 let formatted = valInWan.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
                                 label += formatted + ' 万';
+                            } else {
+                                label += '无数据';
                             }
                             return label;
                         }
@@ -293,7 +276,7 @@
             scales: {
                 x: { 
                     grid: { display: false },
-                    ticks: { display: false } // 隐藏默认的X轴，用我们的插件画
+                    ticks: { display: false } // 隐藏自带，用插件画
                 },
                 y: { 
                     beginAtZero: true,
@@ -322,12 +305,6 @@
         const match = dateStr.match(/(?:(\d+)年)?(\d+)月(\d+)日/);
         if (match) return { year: match[1] ? Number(match[1]) : new Date().getFullYear(), month: Number(match[2]) - 1, day: Number(match[3]) };
         return null;
-    }
-    function formatDateForDisplay(dateStr) {
-        const d = parseDateToObj(dateStr);
-        if (!d) return dateStr;
-        const cY = new Date().getFullYear();
-        return d.year === cY ? `${d.month + 1}月${d.day}日` : `${d.year}年${d.month + 1}月${d.day}日`;
     }
     function formatObjToDisplay(obj) {
         if (!obj) return '';
@@ -402,7 +379,6 @@
             }
         });
     }
-    // ====================================================
 
     function renderCalendar() {
         const year = currentCalDate.getFullYear();
