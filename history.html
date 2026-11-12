@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 15px; margin: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; padding: 15px; margin: 0; overflow-x: hidden; }
         .container { max-width: 800px; margin: 0 auto; }
         
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
@@ -20,22 +20,14 @@
 
         .data-content { display: none; } 
         
-        /* 筛选栏 */
-        .filter-bar { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.04); }
-        .filter-bar select { flex: 1; min-width: 120px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; outline: none; background: #f5f5f7; }
-        .compare-btn { width: 100%; background: #007aff; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; transition: 0.2s; }
-
-        /* ================= 新增的查询日历区 ================= */
-        .calendar-section { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); margin-bottom: 15px; }
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: bold; color: #1d1d1f; font-size: 15px;}
-        .arrow-btn { background: none; border: none; font-size: 16px; color: #007aff; cursor: pointer; padding: 5px 15px; border-radius: 8px; transition: 0.2s; }
-        .arrow-btn:hover { background: #f5f5f7; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
-        .weekday { font-size: 12px; color: #86868b; margin-bottom: 5px; }
-        .day-cell { font-size: 14px; padding: 6px 0; border-radius: 8px; color: #1d1d1f; }
-        .day-cell.empty { visibility: hidden; }
-        .day-cell.in-range { background: #e5f0ff; color: #007aff; font-weight: bold; } /* 范围高亮 */
-        .day-cell.start-end { background: #007aff; color: white; border-radius: 50%; } /* 起止日高亮 */
+        /* 主筛选按钮 */
+        .main-filter-btn {
+            width: 100%; background: white; border: 1px solid #d2d2d7; padding: 14px;
+            border-radius: 15px; font-size: 15px; font-weight: bold; color: #007aff;
+            margin-bottom: 15px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04); transition: 0.2s;
+        }
+        .main-filter-btn:active { background: #f0f0f5; transform: scale(0.98); }
 
         /* 图例 */
         .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; font-size: 12px; color: #86868b; }
@@ -45,14 +37,51 @@
         .dot.min { background-color: #d1d1d6; }
         .dot.normal { background-color: rgba(0, 122, 255, 0.6); }
 
-        .chart-container { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 280px; margin-bottom: 10px; }
+        .chart-container { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); height: 300px; margin-bottom: 10px; }
         
         .stats-info { text-align: center; font-size: 16px; color: #1d1d1f; font-weight: 500; min-height: 20px; padding: 10px 0; line-height: 1.6; }
         .stats-info span { color: #007aff; font-weight: 700; font-size: 18px; }
 
+        /* ================= 日历弹窗模态框 ================= */
+        .calendar-modal {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .calendar-modal.show { opacity: 1; pointer-events: auto; }
+
+        .calendar-popup-content {
+            background: white; border-radius: 24px; padding: 20px;
+            width: 90%; max-width: 360px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .calendar-modal.show .calendar-popup-content { transform: translateY(0); }
+
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; color: #1d1d1f; font-size: 16px;}
+        .arrow-btn { background: #f5f5f7; border: none; font-size: 16px; color: #007aff; cursor: pointer; padding: 8px 16px; border-radius: 12px; transition: 0.2s; }
+        .arrow-btn:active { background: #e5e5ea; }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; margin-bottom: 15px; }
+        .weekday { font-size: 12px; color: #86868b; margin-bottom: 5px; font-weight: 500; }
+        .day-cell { font-size: 15px; padding: 8px 0; border-radius: 50%; color: #1d1d1f; cursor: pointer; transition: 0.1s; }
+        .day-cell.empty { visibility: hidden; }
+        .day-cell.in-range { background: #e5f0ff; color: #007aff; border-radius: 0; }
+        .day-cell.start-end { background: #007aff; color: white; border-radius: 50%; font-weight: bold; box-shadow: 0 4px 10px rgba(0,122,255,0.3); }
+        .day-cell:active:not(.empty) { transform: scale(0.9); }
+
+        /* 底部起止日选择按钮 */
+        .calendar-footer { display: flex; gap: 10px; }
+        .date-pick-btn {
+            flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #e5e5ea;
+            background: white; font-size: 14px; font-weight: bold; color: #86868b; 
+            cursor: pointer; transition: 0.2s;
+        }
+        .date-pick-btn.active { border-color: #007aff; color: #007aff; background: #e5f0ff; }
+
         @media (min-width: 500px) {
-            .filter-bar select { width: auto; flex: none; }
-            .compare-btn { width: auto; }
             .header h1 { padding-right: 0; }
             .chart-container { height: 350px; }
         }
@@ -72,24 +101,10 @@
     </div>
 
     <div id="data-content" class="data-content">
-        <div class="filter-bar">
-            <select id="start-date"></select>
-            <span style="color: #86868b; font-size: 14px;">至</span>
-            <select id="end-date"></select>
-            <button class="compare-btn" onclick="filterHistory()">查询数据</button>
-        </div>
-
-        <!-- 查询日历展示区 -->
-        <div class="calendar-section">
-            <div class="calendar-header">
-                <button class="arrow-btn" onclick="changeMonth(-1)">◀</button>
-                <span id="calendar-title">加载中...</span>
-                <button class="arrow-btn" onclick="changeMonth(1)">▶</button>
-            </div>
-            <div class="calendar-grid" id="calendar-grid">
-                <!-- JS 动态生成 -->
-            </div>
-        </div>
+        <!-- 主筛选按钮 -->
+        <button class="main-filter-btn" id="mainFilterBtn">
+            📅 <span id="main-filter-text">选择日期范围</span>
+        </button>
 
         <div class="legend">
             <div class="legend-item"><span class="dot max"></span> 营业额最高</div>
@@ -102,6 +117,25 @@
         </div>
 
         <div class="stats-info" id="stats-display"></div>
+    </div>
+</div>
+
+<!-- 日历弹窗 -->
+<div class="calendar-modal" id="calendarModal">
+    <div class="calendar-popup-content" id="calendarPopupContent">
+        <div class="calendar-header">
+            <button class="arrow-btn" onclick="changeMonth(-1)">◀</button>
+            <span id="calendar-title">加载中...</span>
+            <button class="arrow-btn" onclick="changeMonth(1)">▶</button>
+        </div>
+        <div class="calendar-grid" id="calendar-grid">
+            <!-- JS 动态生成 -->
+        </div>
+        <!-- 起止日选择按钮 -->
+        <div class="calendar-footer">
+            <button id="btn-picker-start" class="date-pick-btn active" onclick="setActivePicker('start')">起始日</button>
+            <button id="btn-picker-end" class="date-pick-btn" onclick="setActivePicker('end')">截止日</button>
+        </div>
     </div>
 </div>
 
@@ -118,8 +152,9 @@
 
     // 日历相关变量
     let currentCalDate = new Date(); // 当前日历显示的月份
-    let filterStartObj = null;       // 当前查询的起始日期对象
-    let filterEndObj = null;         // 当前查询的结束日期对象
+    let filterStartObj = null;       // 当前查询的起始日期对象 { year, month, day }
+    let filterEndObj = null;         // 当前查询的结束日期对象 { year, month, day }
+    let activePicker = 'start';      // 当前正在选择的是 'start' 还是 'end'
 
     // 解析日期字符串为对象 (兼容 2026年10月19日 和 10月19日)
     function parseDateToObj(dateStr) {
@@ -134,16 +169,26 @@
         return null;
     }
 
-    // ★ 新增：格式化日期显示（今年不显示年份，往年显示年份）
+    // ★ 格式化日期显示（今年不显示年份，往年显示年份）
     function formatDateForDisplay(dateStr) {
         const dateObj = parseDateToObj(dateStr);
         if (!dateObj) return dateStr;
-        
         const currentYear = new Date().getFullYear();
         if (dateObj.year === currentYear) {
             return `${dateObj.month + 1}月${dateObj.day}日`;
         } else {
             return `${dateObj.year}年${dateObj.month + 1}月${dateObj.day}日`;
+        }
+    }
+
+    // 格式化对象显示
+    function formatObjToDisplay(obj) {
+        if (!obj) return '';
+        const currentYear = new Date().getFullYear();
+        if (obj.year === currentYear) {
+            return `${obj.month + 1}月${obj.day}日`;
+        } else {
+            return `${obj.year}年${obj.month + 1}月${obj.day}日`;
         }
     }
 
@@ -176,14 +221,59 @@
             if (startTs !== null && endTs !== null) {
                 if (cellTs >= startTs && cellTs <= endTs) {
                     classes += ' in-range';
-                    // 如果是起始或结束日
                     if (cellTs === startTs || cellTs === endTs) {
                         classes += ' start-end';
                     }
                 }
             }
-            grid.innerHTML += `<div class="${classes}">${i}</div>`;
+            grid.innerHTML += `<div class="${classes}" onclick="selectDay(${year}, ${month}, ${i})">${i}</div>`;
         }
+    }
+
+    // 点击日期格子
+    function selectDay(year, month, day) {
+        const selectedObj = { year, month, day };
+        
+        if (activePicker === 'start') {
+            filterStartObj = selectedObj;
+            // 如果起始日被选到了截止日之后，自动把截止日同步为同一天
+            if (filterEndObj && new Date(year, month, day) > new Date(filterEndObj.year, filterEndObj.month, filterEndObj.day)) {
+                filterEndObj = selectedObj; 
+            }
+            setActivePicker('end'); // 自动切换到截止日选择
+        } else {
+            filterEndObj = selectedObj;
+            // 如果截止日被选到了起始日之前，自动把起始日同步为同一天
+            if (filterStartObj && new Date(year, month, day) < new Date(filterStartObj.year, filterStartObj.month, filterStartObj.day)) {
+                filterStartObj = selectedObj;
+            }
+        }
+        
+        updatePickerBtnText();
+        renderCalendar();
+        updateChartFromRange();
+    }
+
+    // 更新底部按钮的文案和主按钮文案
+    function updatePickerBtnText() {
+        const btnStart = document.getElementById('btn-picker-start');
+        const btnEnd = document.getElementById('btn-picker-end');
+        const mainText = document.getElementById('main-filter-text');
+
+        const startStr = formatObjToDisplay(filterStartObj);
+        const endStr = formatObjToDisplay(filterEndObj);
+
+        btnStart.innerText = startStr || '起始日';
+        btnEnd.innerText = endStr || '截止日';
+
+        mainText.innerText = `${startStr} 至 ${endStr}`;
+    }
+
+    // 切换激活状态
+    function setActivePicker(picker) {
+        activePicker = picker;
+        document.getElementById('btn-picker-start').classList.toggle('active', picker === 'start');
+        document.getElementById('btn-picker-end').classList.toggle('active', picker === 'end');
     }
 
     // 切换月份
@@ -192,6 +282,23 @@
         renderCalendar();
     }
 
+    // 根据选择的起止日期过滤数据并更新图表
+    function updateChartFromRange() {
+        if (!filterStartObj || !filterEndObj) return;
+        const startTs = new Date(filterStartObj.year, filterStartObj.month, filterStartObj.day).getTime();
+        const endTs = new Date(filterEndObj.year, filterEndObj.month, filterEndObj.day).getTime();
+
+        const filtered = globalData.filter(item => {
+            const d = parseDateToObj(item.date);
+            if (!d) return false;
+            const ts = new Date(d.year, d.month, d.day).getTime();
+            return ts >= startTs && ts <= endTs;
+        });
+
+        renderHistoryChart(filtered);
+    }
+
+    // ================= 初始化数据 =================
     fetch('data.json')
         .then(response => response.json())
         .then(data => {
@@ -202,22 +309,11 @@
             globalData = data;
             document.getElementById('data-content').style.display = 'block';
 
-            const startSel = document.getElementById('start-date');
-            const endSel = document.getElementById('end-date');
-            startSel.innerHTML = ''; endSel.innerHTML = '';
-
-            globalData.forEach(item => {
-                // ★ 下拉框的值保留原样，但显示的文字应用智能格式化
-                const displayDate = formatDateForDisplay(item.date);
-                startSel.innerHTML += `<option value="${item.date}">${displayDate}</option>`;
-                endSel.innerHTML += `<option value="${item.date}">${displayDate}</option>`;
-            });
-
             const today = new Date();
             const currentYear = today.getFullYear();
-            const currentMonth = today.getMonth(); // 0-11
+            const currentMonth = today.getMonth();
 
-            // ★ 核心修改：本月筛选必须同时匹配年份和月份
+            // 找出本月的所有数据
             let monthData = globalData.filter(item => {
                 const dObj = parseDateToObj(item.date);
                 return dObj && dObj.year === currentYear && dObj.month === currentMonth;
@@ -225,79 +321,46 @@
 
             let defaultStartDate, defaultEndDate;
 
-            // 如果有本月数据，默认显示本月首尾
+            // 有本月数据，默认查本月；没本月数据，默认查所有数据的首尾
             if (monthData.length > 0) {
                 defaultStartDate = monthData[0].date;
                 defaultEndDate = monthData[monthData.length - 1].date;
             } else {
-                // 如果本月没数据，默认显示所有数据的首尾
                 defaultStartDate = globalData[0].date;
                 defaultEndDate = globalData[globalData.length - 1].date;
             }
 
-            let sIdx = globalData.findIndex(item => item.date === defaultStartDate);
-            let eIdx = globalData.findIndex(item => item.date === defaultEndDate);
-            
-            // 防呆
-            if (sIdx > eIdx) {
-                defaultEndDate = monthData[monthData.length - 1].date;
-                eIdx = globalData.findIndex(item => item.date === defaultEndDate);
-            }
-
-            startSel.value = defaultStartDate;
-            endSel.value = defaultEndDate;
-
-            // 更新日历的状态
             filterStartObj = parseDateToObj(defaultStartDate);
             filterEndObj = parseDateToObj(defaultEndDate);
+            
+            // 日历自动跳到起始日期所在的月
             if (filterStartObj) {
-                currentCalDate = new Date(filterStartObj.year, filterStartObj.month, 1); // 日历跳到起始月份
+                currentCalDate = new Date(filterStartObj.year, filterStartObj.month, 1);
             }
 
+            updatePickerBtnText();
             renderCalendar();
-            renderHistoryChart(globalData.slice(sIdx, eIdx + 1));
+            updateChartFromRange();
         })
         .catch(error => {
             document.getElementById('empty-state').style.display = 'block';
         });
 
-    function filterHistory() {
-        const startDate = document.getElementById('start-date').value;
-        const endDate = document.getElementById('end-date').value;
-        let startIdx = globalData.findIndex(item => item.date === startDate);
-        let endIdx = globalData.findIndex(item => item.date === endDate);
-        
-        if (startIdx > endIdx) {
-            [startIdx, endIdx] = [endIdx, startIdx];
-            document.getElementById('start-date').value = endDate;
-            document.getElementById('end-date').value = startDate;
-        }
-
-        // 点击查询时，更新日历状态
-        filterStartObj = parseDateToObj(document.getElementById('start-date').value);
-        filterEndObj = parseDateToObj(document.getElementById('end-date').value);
-        
-        // 让日历自动跳到起始日期的月份
-        if (filterStartObj) {
-            currentCalDate = new Date(filterStartObj.year, filterStartObj.month, 1);
-        }
-        renderCalendar();
-
-        renderHistoryChart(globalData.slice(startIdx, endIdx + 1));
-    }
-
+    // ================= 图表渲染 =================
     function renderHistoryChart(dataArray) {
-        // ★ 图表 X 轴标签应用智能格式化
         const labels = dataArray.map(item => formatDateForDisplay(item.date));
         const revenues = dataArray.map(item => item.revenue);
-        const maxRev = Math.max(...revenues);
-        const minRev = Math.min(...revenues);
-
-        const bgColors = revenues.map(val => {
-            if (val === maxRev) return '#ff9500';
-            if (val === minRev) return '#d1d1d6';
-            return 'rgba(0, 122, 255, 0.6)';
-        });
+        
+        let bgColors = [];
+        if (revenues.length > 0) {
+            const maxRev = Math.max(...revenues);
+            const minRev = Math.min(...revenues);
+            bgColors = revenues.map(val => {
+                if (val === maxRev) return '#ff9500';
+                if (val === minRev) return '#d1d1d6';
+                return 'rgba(0, 122, 255, 0.6)';
+            });
+        }
 
         historyChart.data.labels = labels;
         historyChart.data.datasets[0].data = revenues;
@@ -313,9 +376,22 @@
             
             statsDisplay.innerHTML = `所选日期总营业额: <span>$${total.toLocaleString()}</span><br>所选日期平均营业额: <span>$${avg.toLocaleString()}</span>`;
         } else {
-            statsDisplay.innerHTML = '';
+            statsDisplay.innerHTML = '当前区间暂无数据哦～';
         }
     }
+
+    // ================= 模态框交互事件 =================
+    document.getElementById('mainFilterBtn').addEventListener('click', () => {
+        document.getElementById('calendarModal').classList.add('show');
+    });
+
+    // 点击黑色遮罩关闭弹窗
+    document.getElementById('calendarModal').addEventListener('click', (e) => {
+        if(e.target.id === 'calendarModal') {
+            document.getElementById('calendarModal').classList.remove('show');
+        }
+    });
+
 </script>
 </body>
 </html>
