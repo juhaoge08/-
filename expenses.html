@@ -157,6 +157,8 @@
     };
     let currentMode = 'all';
 
+    const SALARY_VALUE = '__salary__'; // 工资合并项的特殊值
+
     function applyKnobVisual(mode) {
         document.getElementById('knob-hand').style.transform = `rotate(${KNOB_ANGLE[mode]}deg)`;
         document.getElementById('lbl-pvs').classList.toggle('active', mode === 'noPvs');
@@ -223,7 +225,7 @@
         }
     }
 
-    /* ===== 下拉初始化 ===== */
+    /* ===== 下拉初始化：工资类合并为「工资」 ===== */
     function initSelectOptions() {
         const startSel = document.getElementById('start-date');
         const endSel = document.getElementById('end-date');
@@ -242,10 +244,20 @@
             endSel.value = uniqueDates[uniqueDates.length - 1];
         }
 
-        const uniqueMemos = [...new Set(globalExpenses.map(item => item.memo))];
-        uniqueMemos.filter(m => m && m.trim() !== "").forEach(memo => {
-            keywordSel.innerHTML += `<option value="${memo}">${memo}</option>`;
-        });
+        const uniqueMemos = [...new Set(globalExpenses.map(item => item.memo))]
+            .filter(m => m && m.trim() !== "");
+
+        // 非工资词条：照旧逐个列出
+        uniqueMemos
+            .filter(m => !m.includes('工资'))
+            .forEach(memo => {
+                keywordSel.innerHTML += `<option value="${memo}">${memo}</option>`;
+            });
+
+        // 含“工资”的词条：合并成一个「工资」选项
+        if (uniqueMemos.some(m => m.includes('工资'))) {
+            keywordSel.innerHTML += `<option value="${SALARY_VALUE}">工资（全部）</option>`;
+        }
     }
 
     /* ===== 加载数据 ===== */
@@ -277,6 +289,40 @@
         if (startTs > endTs) [startTs, endTs] = [endTs, startTs];
 
         const filteredData = globalExpenses.filter(item => {
+            const memoStr = (item.memo || '').toLowerCase();
+            const ts = parseDateToTimestamp(item.date);
+            if (ts < startTs || ts > endTs) return false;
+
+            // 旋钮：不看 PVS / 不看工资 / 皆不看
+            if ((currentMode === 'noPvs' || currentMode === 'noBoth') && memoStr.includes('pvs')) return false;
+            if ((currentMode === 'noSalary' || currentMode === 'noBoth') && memoStr.includes('工资')) return false;
+
+            // 特定词条过滤
+            if (keyword) {
+                if (keyword === SALARY_VALUE) {
+                    if (!memoStr.includes('工资')) return false; // 工资合并项：匹配所有含“工资”
+                } else if (item.memo !== keyword) {
+                    return false; // 其他词条：精确匹配
+                }
+            }
+
+            return true;
+        });
+
+        renderList(filteredData);
+    }
+
+    /* ===== 重置 ===== */
+    function resetExpenses() {
+        initSelectOptions();
+        setKnobMode('all', false);
+        document.getElementById('keyword-filter').value = "";
+        renderList(globalExpenses);
+    }
+</script>
+
+</body>
+</html>        const filteredData = globalExpenses.filter(item => {
             const memoStr = (item.memo || '').toLowerCase();
             const ts = parseDateToTimestamp(item.date);
             if (ts < startTs || ts > endTs) return false;
