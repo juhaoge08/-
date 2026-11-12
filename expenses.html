@@ -13,169 +13,71 @@
         .back-btn { font-size: 14px; color: #007aff; text-decoration: none; background: #e5e5ea; padding: 8px 12px; border-radius: 12px; font-weight: bold; }
         .header h1 { font-size: 20px; margin: 0; padding-right: 70px; }
 
-        /* ================= 筛选栏 ================= */
         .filter-bar {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 15px;
-            background: white;
-            padding: 15px;
-            border-radius: 15px;
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
+            margin-bottom: 15px; background: white; padding: 15px; border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.04);
         }
-
-        /* 第一行：日期选择 */
-        .date-inputs {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            justify-content: center;
-        }
+        .date-inputs { display: flex; align-items: center; gap: 10px; width: 100%; justify-content: center; }
         .date-inputs select {
-            flex: 1;
-            max-width: 160px;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-            outline: none;
-            background: #f5f5f7;
+            flex: 1; max-width: 160px; padding: 10px; border-radius: 8px;
+            border: 1px solid #ccc; font-size: 14px; outline: none; background: #f5f5f7;
         }
         .date-inputs span { color: #86868b; font-size: 14px; }
 
-        /* 第二行：旋钮 + 特定词条 */
-        .extra-filters {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            width: 100%;
-            align-items: center;
-        }
+        .extra-filters { display: flex; flex-direction: column; gap: 12px; width: 100%; align-items: center; }
 
-        /* ---------- 圆形旋钮 ---------- */
-        .knob-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-        }
+        .knob-section { display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .knob-stage {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            cursor: pointer;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
         }
         .knob-stage:focus-visible { outline: 2px solid #007aff; outline-offset: 6px; border-radius: 40px; }
 
         .knob-dial {
-            position: relative;
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            flex: 0 0 auto;
+            position: relative; width: 64px; height: 64px; border-radius: 50%; flex: 0 0 auto;
             background: linear-gradient(145deg, #ffffff, #ececf0);
             border: 1px solid #d8d8dd;
             box-shadow: inset 0 2px 6px rgba(255,255,255,.95), 0 4px 12px rgba(0,0,0,.08);
         }
-        /* 内圈虚线装饰 */
         .knob-dial::before {
-            content: '';
-            position: absolute;
-            inset: 10px;
-            border-radius: 50%;
+            content: ''; position: absolute; inset: 10px; border-radius: 50%;
             border: 1px dashed #dcdce1;
         }
-        /* 顶部“全部”小刻度 */
-        .knob-dial::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            top: 3px;
-            width: 2px;
-            height: 6px;
-            margin-left: -1px;
-            border-radius: 2px;
-            background: #c7c7cc;
-        }
-
         .knob-hand {
-            position: absolute;
-            inset: 0;
-            transform: rotate(0deg);
+            position: absolute; inset: 0; transform: rotate(0deg);
             transition: transform .42s cubic-bezier(.34, 1.56, .64, 1);
         }
         .knob-hand::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            top: 5px;
-            width: 18px;
-            height: 18px;
-            margin-left: -9px;
-            border-radius: 50%;
-            background: #007aff;
-            box-shadow: 0 2px 6px rgba(0, 122, 255, .45);
+            content: ''; position: absolute; left: 50%; top: 5px;
+            width: 18px; height: 18px; margin-left: -9px; border-radius: 50%;
+            background: #007aff; box-shadow: 0 2px 6px rgba(0, 122, 255, .45);
         }
 
         .knob-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #a1a1a6;
-            padding: 6px 10px;
-            border-radius: 20px;
-            white-space: nowrap;
-            transition: color .25s, background .25s;
-            cursor: pointer;
+            font-size: 13px; font-weight: 600; color: #a1a1a6;
+            padding: 6px 10px; border-radius: 20px; white-space: nowrap;
+            transition: color .25s, background .25s; cursor: pointer;
         }
         .knob-label.active { color: #007aff; background: #eaf3ff; }
+        .knob-label-bottom { margin-top: 2px; }
 
-        .knob-status {
-            font-size: 12px;
-            color: #86868b;
-            min-height: 16px;
-        }
+        .knob-status { font-size: 12px; color: #86868b; min-height: 16px; }
 
-        /* ---------- 特定词条下拉 ---------- */
         .keyword-select {
-            width: 100%;
-            max-width: 220px;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-            outline: none;
-            background: #f5f5f7;
+            width: 100%; max-width: 220px; padding: 10px; border-radius: 8px;
+            border: 1px solid #ccc; font-size: 14px; outline: none; background: #f5f5f7;
         }
 
-        /* 第三行：按钮 */
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-            justify-content: center;
-        }
+        .action-buttons { display: flex; gap: 10px; width: 100%; justify-content: center; }
         .filter-btn, .reset-btn {
-            flex: 1;
-            max-width: 160px;
-            padding: 10px 0;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            transition: 0.2s;
-            border: none;
+            flex: 1; max-width: 160px; padding: 10px 0; border-radius: 8px;
+            cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; border: none;
         }
         .filter-btn { background: #007aff; color: white; }
         .filter-btn:active { background: #005bb5; }
         .reset-btn { background: #e5e5ea; color: #1d1d1f; }
 
-        /* 电脑端宽屏适配 */
         @media (min-width: 700px) {
             .filter-bar { flex-direction: row; flex-wrap: nowrap; }
             .date-inputs { width: auto; }
@@ -185,17 +87,15 @@
         }
 
         .expense-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); }
-
         .expense-list { list-style: none; padding: 0; margin: 0; }
         .expense-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px dashed #f0f0f0; font-size: 15px; }
         .expense-item:last-child { border-bottom: none; }
         .expense-memo { color: #1d1d1f; font-weight: 600; margin-bottom: 4px; }
         .expense-date { font-size: 12px; color: #a1a1a6; }
         .expense-amount { color: #ff3b30; font-weight: bold; font-size: 18px; }
-
         .no-expense { color: #a1a1a6; font-size: 14px; text-align: center; padding: 30px 0; }
     </style>
-</head>
+    </head>
 <body>
 
 <div class="container">
@@ -205,18 +105,16 @@
     </div>
 
     <div class="filter-bar" id="filter-bar" style="display: none;">
-        <!-- 第一行：日期 -->
         <div class="date-inputs">
             <select id="start-date"></select>
             <span>至</span>
             <select id="end-date"></select>
         </div>
 
-        <!-- 第二行：旋钮 + 特定词条 -->
         <div class="extra-filters">
             <div class="knob-section">
                 <div class="knob-stage" id="knob-stage" role="button" tabindex="0"
-                     aria-label="切换隐藏规则：全部 / 不看PVS / 不看工资"
+                     aria-label="切换隐藏规则：全部 / 不看PVS / 不看工资 / PVS工资皆不看"
                      onclick="cycleKnob()" onkeydown="knobKeydown(event)">
                     <span class="knob-label" id="lbl-pvs" onclick="pickMode(event, 'noPvs')">不看PVS</span>
                     <div class="knob-dial">
@@ -224,16 +122,15 @@
                     </div>
                     <span class="knob-label" id="lbl-salary" onclick="pickMode(event, 'noSalary')">不看工资</span>
                 </div>
+                <span class="knob-label knob-label-bottom" id="lbl-both" onclick="pickMode(event, 'noBoth')">PVS工资皆不看</span>
                 <div class="knob-status" id="knob-status">显示全部记录</div>
             </div>
 
             <select id="keyword-filter" class="keyword-select" onchange="filterExpenses()">
                 <option value="">所有特定词条</option>
-                <!-- 动态生成 -->
             </select>
         </div>
 
-        <!-- 第三行：按钮 -->
         <div class="action-buttons">
             <button class="filter-btn" onclick="filterExpenses()">查询</button>
             <button class="reset-btn" onclick="resetExpenses()">重置</button>
@@ -247,36 +144,25 @@
     </div>
 </div>
 <script>
-    let globalExpenses = []; // 存储原始数据
+    let globalExpenses = [];
 
-    /* ================= 旋钮状态 ================= */
-    // all = 显示全部 | noPvs = 不看PVS | noSalary = 不看工资
-    const KNOB_MODES = ['all', 'noPvs', 'noSalary'];
+    /* ===== 四档旋钮：all 上 / noPvs 左 / noSalary 右 / noBoth 下 ===== */
+    const KNOB_MODES = ['all', 'noPvs', 'noSalary', 'noBoth'];
+    const KNOB_ANGLE = { all: 0, noPvs: -90, noSalary: 90, noBoth: 180 };
+    const KNOB_STATUS = {
+        all: '显示全部记录',
+        noPvs: '已隐藏 PVS 记录',
+        noSalary: '已隐藏工资记录',
+        noBoth: '已隐藏 PVS 和工资记录'
+    };
     let currentMode = 'all';
 
     function applyKnobVisual(mode) {
-        const hand = document.getElementById('knob-hand');
-        const lblPvs = document.getElementById('lbl-pvs');
-        const lblSalary = document.getElementById('lbl-salary');
-        const status = document.getElementById('knob-status');
-
-        // 指针旋转：顶部 = 全部，左侧 = 不看PVS，右侧 = 不看工资
-        if (mode === 'noPvs') {
-            hand.style.transform = 'rotate(-90deg)';
-        } else if (mode === 'noSalary') {
-            hand.style.transform = 'rotate(90deg)';
-        } else {
-            hand.style.transform = 'rotate(0deg)';
-        }
-
-        lblPvs.classList.toggle('active', mode === 'noPvs');
-        lblSalary.classList.toggle('active', mode === 'noSalary');
-
-        status.textContent = mode === 'noPvs'
-            ? '已隐藏 PVS 记录'
-            : mode === 'noSalary'
-                ? '已隐藏工资记录'
-                : '显示全部记录';
+        document.getElementById('knob-hand').style.transform = `rotate(${KNOB_ANGLE[mode]}deg)`;
+        document.getElementById('lbl-pvs').classList.toggle('active', mode === 'noPvs');
+        document.getElementById('lbl-salary').classList.toggle('active', mode === 'noSalary');
+        document.getElementById('lbl-both').classList.toggle('active', mode === 'noBoth');
+        document.getElementById('knob-status').textContent = KNOB_STATUS[mode];
     }
 
     function setKnobMode(mode, applyFilter = true) {
@@ -285,19 +171,16 @@
         if (applyFilter) filterExpenses();
     }
 
-    // 点击旋钮：三档循环
     function cycleKnob() {
         const idx = KNOB_MODES.indexOf(currentMode);
         setKnobMode(KNOB_MODES[(idx + 1) % KNOB_MODES.length]);
     }
 
-    // 点击两侧标签：直接跳到该档（再点一次回到全部）
     function pickMode(event, mode) {
         event.stopPropagation();
         setKnobMode(currentMode === mode ? 'all' : mode);
     }
 
-    // 键盘无障碍支持
     function knobKeydown(event) {
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
@@ -305,7 +188,7 @@
         }
     }
 
-    /* ================= 日期解析 ================= */
+    /* ===== 日期解析 ===== */
     function parseDateToTimestamp(dateStr) {
         const match = dateStr.match(/(?:(\d+)年)?(\d+)月(\d+)日/);
         if (match) {
@@ -317,18 +200,13 @@
         return 0;
     }
 
-    /* ================= 渲染列表 ================= */
+    /* ===== 渲染 ===== */
     function renderList(dataArray) {
         const listEl = document.getElementById('expense-list');
         listEl.innerHTML = '';
-
         if (dataArray && dataArray.length > 0) {
-            const sortedData = [...dataArray].sort((a, b) => {
-                const timeA = parseDateToTimestamp(a.date);
-                const timeB = parseDateToTimestamp(b.date);
-                return timeB - timeA;
-            });
-
+            const sortedData = [...dataArray].sort((a, b) =>
+                parseDateToTimestamp(b.date) - parseDateToTimestamp(a.date));
             sortedData.forEach(item => {
                 listEl.innerHTML += `
                     <li class="expense-item">
@@ -345,7 +223,7 @@
         }
     }
 
-    /* ================= 初始化下拉框 ================= */
+    /* ===== 下拉初始化 ===== */
     function initSelectOptions() {
         const startSel = document.getElementById('start-date');
         const endSel = document.getElementById('end-date');
@@ -355,25 +233,22 @@
 
         const uniqueDates = [...new Set(globalExpenses.map(item => item.date))];
         uniqueDates.sort((a, b) => parseDateToTimestamp(a) - parseDateToTimestamp(b));
-
         uniqueDates.forEach(date => {
             startSel.innerHTML += `<option value="${date}">${date}</option>`;
             endSel.innerHTML += `<option value="${date}">${date}</option>`;
         });
-
         if (uniqueDates.length > 0) {
             startSel.value = uniqueDates[0];
             endSel.value = uniqueDates[uniqueDates.length - 1];
         }
 
-        // 提取所有不重复的 Memo 词条
         const uniqueMemos = [...new Set(globalExpenses.map(item => item.memo))];
         uniqueMemos.filter(m => m && m.trim() !== "").forEach(memo => {
             keywordSel.innerHTML += `<option value="${memo}">${memo}</option>`;
         });
     }
 
-    /* ================= 加载数据 ================= */
+    /* ===== 加载数据 ===== */
     fetch('expenses.json')
         .then(response => response.json())
         .then(expenses => {
@@ -391,7 +266,7 @@
             document.getElementById('expense-list').innerHTML = '<li class="no-expense">读取失败，请检查 expenses.json</li>';
         });
 
-    /* ================= 核心过滤逻辑 ================= */
+    /* ===== 核心过滤 ===== */
     function filterExpenses() {
         const startDate = document.getElementById('start-date').value;
         const endDate = document.getElementById('end-date').value;
@@ -399,37 +274,25 @@
 
         let startTs = parseDateToTimestamp(startDate);
         let endTs = parseDateToTimestamp(endDate);
-
-        if (startTs > endTs) {
-            [startTs, endTs] = [endTs, startTs];
-        }
+        if (startTs > endTs) [startTs, endTs] = [endTs, startTs];
 
         const filteredData = globalExpenses.filter(item => {
             const memoStr = (item.memo || '').toLowerCase();
-
-            // 1. 日期过滤
             const ts = parseDateToTimestamp(item.date);
             if (ts < startTs || ts > endTs) return false;
-
-            // 2. 旋钮：不看 PVS
-            if (currentMode === 'noPvs' && memoStr.includes('pvs')) return false;
-
-            // 3. 旋钮：不看工资
-            if (currentMode === 'noSalary' && memoStr.includes('工资')) return false;
-
-            // 4. 特定词条过滤
+            if ((currentMode === 'noPvs' || currentMode === 'noBoth') && memoStr.includes('pvs')) return false;
+            if ((currentMode === 'noSalary' || currentMode === 'noBoth') && memoStr.includes('工资')) return false;
             if (keyword && item.memo !== keyword) return false;
-
             return true;
         });
 
         renderList(filteredData);
     }
 
-    /* ================= 重置 ================= */
+    /* ===== 重置 ===== */
     function resetExpenses() {
         initSelectOptions();
-        setKnobMode('all', false);          // 旋钮回到“显示全部”
+        setKnobMode('all', false);
         document.getElementById('keyword-filter').value = "";
         renderList(globalExpenses);
     }
